@@ -21,7 +21,15 @@ You need [Node.js 22.12 or newer](https://nodejs.org/). Install the local depend
 npm install
 ```
 
-Then start the app:
+Then start the app with the Gradle wrapper:
+
+```sh
+./gradlew appRun
+```
+
+On Windows, use `gradlew.bat appRun`. The `run` task is also available as a shorter alias.
+
+You can still start Vite directly when working only on the frontend:
 
 ```sh
 npm start
@@ -35,7 +43,18 @@ To run the CSV importer tests:
 npm test
 ```
 
-To run the same strict TypeScript checks used by the reference projects:
+The Gradle wrapper provides the complete project workflow without requiring a separately installed Gradle:
+
+```sh
+./gradlew lint      # strict TypeScript checks
+./gradlew test      # CSV importer and schema tests
+./gradlew check     # formatting, linting, and tests
+./gradlew build     # checks plus the production Vite bundle
+```
+
+Gradle delegates these application tasks to the locked npm toolchain. The wrapper uses Gradle 9.7.1 and pins the official binary-distribution checksum.
+
+To run the strict TypeScript checks directly through npm:
 
 ```sh
 npm run lint
@@ -74,6 +93,8 @@ The street map uses the same technology as the MBTA Tracker project: MapLibre GL
 - `vite.config.ts` — local-only development and preview server configuration
 - `test/csv.test.ts` — focused Vitest importer and schema tests
 - `tsconfig.json` — strict compiler rules aligned with MBTATracker and FitForge
+- `build.gradle` — npm-backed lint, test, build, and local app tasks
+- `gradlew` / `gradlew.bat` — pinned Gradle 9.7.1 wrapper launchers
 
 ## License
 

@@ -1,0 +1,93 @@
+import org.gradle.api.tasks.wrapper.Wrapper
+
+plugins {
+  id 'base'
+}
+
+def npmExecutable = System.getProperty('os.name').toLowerCase().contains('windows') ? 'npm.cmd' : 'npm'
+def frontendInputs = files(
+  'index.html',
+  'map-styles',
+  'package.json',
+  'package-lock.json',
+  'src',
+  'styles.css',
+  'test',
+  'tsconfig.json',
+  'vite.config.ts',
+)
+
+tasks.register('npmInstall', Exec) {
+  group = 'build setup'
+  description = 'Install the locked Node.js dependencies.'
+  inputs.files('package.json', 'package-lock.json')
+  outputs.dir('node_modules')
+  commandLine npmExecutable, 'ci'
+}
+
+tasks.register('lint', Exec) {
+  group = 'verification'
+  description = 'Run the strict TypeScript compiler checks.'
+  dependsOn tasks.named('npmInstall')
+  inputs.files(frontendInputs)
+  commandLine npmExecutable, 'run', 'lint'
+}
+
+tasks.register('formatCheck', Exec) {
+  group = 'verification'
+  description = 'Verify that the TypeScript source follows the project formatting rules.'
+  dependsOn tasks.named('npmInstall')
+  inputs.files(frontendInputs)
+  commandLine npmExecutable, 'run', 'format:check'
+}
+
+tasks.register('test', Exec) {
+  group = 'verification'
+  description = 'Run the Wardrive Atlas test suite.'
+  dependsOn tasks.named('npmInstall')
+  inputs.files(frontendInputs)
+  commandLine npmExecutable, 'test'
+}
+
+tasks.register('appBuild', Exec) {
+  group = 'build'
+  description = 'Create the production Wardrive Atlas application bundle.'
+  dependsOn tasks.named('npmInstall')
+  inputs.files(frontendInputs)
+  outputs.dir('dist')
+  commandLine npmExecutable, 'run', 'build'
+}
+
+tasks.register('appRun', Exec) {
+  group = 'application'
+  description = 'Run Wardrive Atlas locally with the Vite development server.'
+  dependsOn tasks.named('npmInstall')
+  standardInput = System.in
+  commandLine npmExecutable, 'start'
+}
+
+tasks.register('run') {
+  group = 'application'
+  description = 'Alias for appRun.'
+  dependsOn tasks.named('appRun')
+}
+
+tasks.named('check') {
+  dependsOn tasks.named('formatCheck'), tasks.named('lint'), tasks.named('test')
+}
+
+tasks.named('assemble') {
+  dependsOn tasks.named('appBuild')
+}
+
+tasks.named('clean') {
+  delete layout.projectDirectory.dir('dist')
+}
+
+tasks.named('wrapper', Wrapper) {
+  gradleVersion = '9.7.1'
+  distributionType = Wrapper.DistributionType.BIN
+  distributionSha256Sum = 'acd53f1edaf02f1a8ff99879f8a34b302661a057d9b063ae9e35b552f804d20a'
+  networkTimeout = 10000
+  validateDistributionUrl = true
+}
