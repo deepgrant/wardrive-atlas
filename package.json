@@ -1,0 +1,29 @@
+{
+  "name": "wardrive-atlas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A private, local-first viewer for Biscuit wardrive CSV files.",
+  "scripts": {
+    "start": "vite --host 127.0.0.1 --port 4173",
+    "build": "tsc --noEmit && vite build",
+    "lint": "tsc --noEmit",
+    "format": "prettier --write src test vite.config.ts",
+    "format:check": "prettier --check src test vite.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "dependencies": {
+    "maplibre-gl": "5.24.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "typescript": "6.0.3",
+    "vite": "^7.1.4",
+    "vitest": "^4.0.15"
+  }
+}
