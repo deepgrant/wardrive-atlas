@@ -31,6 +31,11 @@ export const WardriveRecordSchema = z.object({
   longitude: z.number().finite().min(-180).max(180),
   altitude: z.number().finite().nullable(),
   accuracy: z.number().finite().nonnegative().nullable(),
+  manufacturerId: z
+    .string()
+    .regex(/^[0-9A-F]{4}$/)
+    .nullable()
+    .default(null),
   type: SignalTypeSchema,
 });
 
@@ -39,6 +44,13 @@ export type Security = z.infer<typeof SecuritySchema>;
 export type WardriveRecord = z.infer<typeof WardriveRecordSchema>;
 
 const SourceRowSchema = z.record(z.string(), z.string());
+
+// Biscuit's MfgrId is a hexadecimal Bluetooth company identifier, not an OUI.
+// Preserve valid IDs without guessing decimal encodings or byte order.
+export function normalizeManufacturerId(value: string | undefined): string | null {
+  const hex = (value ?? '').trim().replace(/^0x/i, '');
+  return /^[0-9a-f]{1,4}$/i.test(hex) ? hex.toUpperCase().padStart(4, '0') : null;
+}
 
 export function parseCsvRows(text: string): string[][] {
   const rows: string[][] = [];
@@ -176,6 +188,7 @@ export function parseWardriveCsv(text: string, sessionName = 'Imported session')
       longitude,
       altitude: readNumber(source['altitudemeters'] ?? source['altitude']),
       accuracy: readNumber(source['accuracymeters'] ?? source['accuracy']),
+      manufacturerId: normalizeManufacturerId(source['mfgrid']),
       type: type.toUpperCase().includes('BLE') || type.toUpperCase().includes('BLUETOOTH') ? 'BLE' : 'Wi-Fi',
     };
     const recordResult = WardriveRecordSchema.safeParse(candidate);

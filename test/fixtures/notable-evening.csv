@@ -1,0 +1,4 @@
+MAC,SSID,AuthMode,FirstSeen,Channel,RSSI,CurrentLatitude,CurrentLongitude,MfgrId,Type
+b4-1e-52-00-00-01,Hidden network,Unknown,2026-08-29T18:00:00Z,0,-50,42.6002,-71.4002,,BLE
+b4-1e-52-00-00-01,Hidden network,Unknown,2026-08-29T18:01:00Z,0,-40,42.6007,-71.3997,,BLE
+DA:00:00:00:00:07,0123456789,Unknown,2026-08-29T18:02:00Z,0,-70,42.6017,-71.3987,invalid,BLE

@@ -3,6 +3,8 @@ import type { FeatureCollection, LineString, Point } from 'geojson';
 import { z } from 'zod';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { parseWardriveCsv, WardriveRecordSchema, type WardriveRecord } from './csv';
+import { normalizeAddress } from './notable';
+import { NotableExplorer, NOTABLE_PINS } from './notable-ui';
 
 function requiredElement<T extends HTMLElement>(id: string): T {
   const element = document.getElementById(id);
@@ -87,7 +89,7 @@ interface AppState {
   route: boolean;
   basemap: boolean;
   mapReady: boolean;
-  pendingFit: PreparedRecord[] | null;
+  pendingFit: WardriveRecord[] | null;
   selected: PreparedRecord | null;
   sampleLoaded: boolean;
   mapErrorShown: boolean;
@@ -152,7 +154,9 @@ function initializeMap(): maplibregl.Map {
 
   map.on('mousemove', (event) => {
     elements.coordinateReadout.textContent = `${Math.abs(event.lngLat.lat).toFixed(5)}°${event.lngLat.lat < 0 ? 'S' : 'N'}  ${Math.abs(event.lngLat.lng).toFixed(5)}°${event.lngLat.lng < 0 ? 'W' : 'E'} · ${state.basemap ? 'OpenFreeMap' : 'offline'}`;
-    const layers = [LAYER_POINTS, LAYER_CLUSTER_POINTS, LAYER_CLUSTER_CIRCLES].filter((id) => map.getLayer(id));
+    const layers = [NOTABLE_PINS, LAYER_POINTS, LAYER_CLUSTER_POINTS, LAYER_CLUSTER_CIRCLES].filter((id) =>
+      map.getLayer(id),
+    );
     const features = layers.length ? map.queryRenderedFeatures(event.point, { layers }) : [];
     map.getCanvas().style.cursor = features.length ? 'pointer' : '';
   });
@@ -165,6 +169,7 @@ function initializeMap(): maplibregl.Map {
   });
 
   map.on('click', (event) => {
+    if (notableExplorer.handleMapClick(event.point)) return;
     const pointLayers = [LAYER_POINTS, LAYER_CLUSTER_POINTS].filter((id) => map.getLayer(id));
     const pointFeature = pointLayers.length ? map.queryRenderedFeatures(event.point, { layers: pointLayers })[0] : null;
     const recordId = pointFeature?.properties?.['recordId'];
@@ -320,6 +325,7 @@ function addMapLayers() {
   });
 
   applyLayerVisibility();
+  notableExplorer.addMapLayers();
 }
 
 function emptyFeatureCollection(): FeatureCollection {
@@ -335,7 +341,6 @@ function pointCollection(records: readonly PreparedRecord[]): FeatureCollection<
         recordId: record.id,
         type: record.type,
         rssi: record.rssi ?? -100,
-        session: record.session,
       },
       geometry: { type: 'Point', coordinates: [record.longitude, record.latitude] },
     })),
@@ -354,7 +359,7 @@ function routeCollection(records: readonly PreparedRecord[]): FeatureCollection<
       return [
         {
           type: 'Feature' as const,
-          properties: { session },
+          properties: {},
           geometry: {
             type: 'LineString' as const,
             coordinates: ordered.map((record) => [record.longitude, record.latitude]),
@@ -458,8 +463,9 @@ async function prepareRecords(records: readonly WardriveRecord[]): Promise<Prepa
   return Promise.all(
     records.map(async (record) => ({
       ...record,
+      id: crypto.randomUUID(),
       ssidHash: await shortHash(record.ssid),
-      bssidHash: await shortHash(record.bssid),
+      bssidHash: await shortHash(normalizeAddress(record.bssid) ?? record.bssid),
     })),
   );
 }
@@ -507,11 +513,10 @@ function rebuildControls(): void {
   const sessions = [...new Set(state.records.map((record) => record.session))];
   elements.sessionFilter.innerHTML = '';
   sessions.forEach((session) => {
-    if (!state.sessions.size || !state.sessions.has(session)) state.sessions.add(session);
     const count = state.records.filter((record) => record.session === session).length;
     const label = document.createElement('label');
     label.className = 'session-check';
-    label.innerHTML = `<input type="checkbox" value="${escapeAttribute(session)}" checked /><span title="${escapeAttribute(session)}">${escapeHtml(session)}</span><small>${count.toLocaleString()}</small>`;
+    label.innerHTML = `<input type="checkbox" value="${escapeAttribute(session)}" ${state.sessions.has(session) ? 'checked' : ''} /><span title="${escapeAttribute(session)}">${escapeHtml(session)}</span><small>${count.toLocaleString()}</small>`;
     elements.sessionFilter.append(label);
   });
 
@@ -547,10 +552,11 @@ async function importFiles(files: FileList | readonly File[] | null): Promise<vo
   for (const file of csvFiles) {
     try {
       const parsed = parseWardriveCsv(await file.text(), file.name);
-      const existingSession = state.records.some((record) => record.session === file.name);
-      const sessionName = existingSession
-        ? `${file.name} (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`
-        : file.name;
+      let sessionName = file.name;
+      let duplicate = 2;
+      while (state.records.some((record) => record.session === sessionName)) {
+        sessionName = `${file.name} (${duplicate++})`;
+      }
       const renamed = parsed.map((record, index) => ({
         ...record,
         session: sessionName,
@@ -615,11 +621,33 @@ function makeSampleRecords(): WardriveRecord[] {
       longitude: center.lng + Math.sin(turn) * 0.016 + (section - 0.5) * 0.012,
       altitude: 8 + Math.sin(turn) * 3,
       accuracy: 3 + (index % 5),
+      manufacturerId: null,
       type,
       firstSeen: new Date(Date.UTC(2026, 7, 29, 13, 20 + index)).toISOString(),
       timestamp: Date.UTC(2026, 7, 29, 13, 20 + index),
     });
   }
+  // Clearly synthetic examples exercise the complete notable workflow without real captures.
+  const examples: Array<[number, Partial<WardriveRecord>]> = [
+    [
+      10,
+      { bssid: 'B4:1E:52:00:00:01', ssid: 'Penguin-SAMPLE', type: 'BLE', band: 'Bluetooth', manufacturerId: '09C8' },
+    ],
+    [11, { bssid: 'B4:1E:52:00:00:01', ssid: 'Penguin-SAMPLE', type: 'BLE', band: 'Bluetooth', rssi: -35 }],
+    [
+      39,
+      {
+        bssid: '00:25:DF:00:00:02',
+        ssid: 'Sample body camera',
+        type: 'BLE',
+        band: 'Bluetooth',
+        manufacturerId: '034D',
+      },
+    ],
+    [65, { bssid: 'DA:00:00:00:00:03', ssid: 'Ray-Ban SAMPLE', type: 'BLE', band: 'Bluetooth' }],
+    [83, { bssid: '70:C9:4E:00:00:04', ssid: 'Sample research lead', type: 'Wi-Fi', band: '2.4 GHz', channel: 6 }],
+  ];
+  for (const [index, changes] of examples) Object.assign(records[index]!, changes);
   return WardriveRecordSchema.array().parse(records);
 }
 
@@ -684,10 +712,11 @@ function applyFilters(): void {
   );
   elements.strongestRssi.textContent = Number.isFinite(strongest) ? `${strongest} dBm` : '—';
   if (state.selected && !state.filtered.includes(state.selected)) closeDetail();
+  notableExplorer.update(state.filtered, state.records.length > 0);
   syncMapData();
 }
 
-function fitToRecords(records: readonly PreparedRecord[]): void {
+function fitToRecords(records: readonly WardriveRecord[]): void {
   if (!records.length) return;
   if (!state.mapReady) {
     state.pendingFit = [...records];
@@ -720,6 +749,7 @@ function formatTime(record: PreparedRecord): string {
 }
 
 function showDetail(record: PreparedRecord): void {
+  notableExplorer.closeSelection();
   state.selected = record;
   elements.detailType.textContent = `${record.type} observation`;
   elements.detailName.textContent = displaySsid(record);
@@ -743,6 +773,8 @@ function showDetail(record: PreparedRecord): void {
 function closeDetail(): void {
   state.selected = null;
   elements.detailCard.hidden = true;
+  elements.detailName.textContent = '';
+  elements.detailList.replaceChildren();
 }
 
 function resetFilters(): void {
@@ -761,6 +793,7 @@ function resetFilters(): void {
 }
 
 function clearAll(): void {
+  notableExplorer.clearCapture();
   state.records = [];
   state.filtered = [];
   state.recordsById.clear();
@@ -777,6 +810,7 @@ function removeSession(session: string): void {
   const removed = state.records.filter((record) => record.session === session);
   removed.forEach((record) => state.recordsById.delete(record.id));
   state.records = state.records.filter((record) => record.session !== session);
+  notableExplorer.pruneDismissals(state.records);
   state.sessions.delete(session);
   if (session.startsWith('Sample drive')) state.sampleLoaded = false;
   closeDetail();
@@ -868,9 +902,17 @@ elements.privacyDialog.addEventListener('close', () => {
   }
   state.privacy = privacyResult.data;
   if (state.selected) showDetail(state.selected);
+  notableExplorer.refreshPrivacy();
   showToast('Privacy settings applied.');
 });
 
 window.addEventListener('resize', () => atlasMap.resize());
 
 const atlasMap = initializeMap();
+const notableExplorer = new NotableExplorer({
+  map: atlasMap,
+  name: (record) => displaySsid(state.recordsById.get(record.id)!),
+  address: (record) => displayBssid(state.recordsById.get(record.id)!),
+  fit: fitToRecords,
+  onSelect: closeDetail,
+});
