@@ -46,6 +46,7 @@ interface ExplorerHost {
   address(record: WardriveRecord): string;
   fit(records: readonly WardriveRecord[]): void;
   onSelect(): void;
+  onRulesChange?(): void;
 }
 
 export class NotableExplorer {
@@ -65,6 +66,7 @@ export class NotableExplorer {
   private research = false;
   private hasData = false;
   private listLimit = 50;
+  private active = true;
   private readonly panel = el('notablePanel');
   private readonly list = el('notableList');
   private readonly counts = el('notableCategories');
@@ -227,6 +229,7 @@ export class NotableExplorer {
     );
     this.renderRules();
     this.update(this.records, this.hasData);
+    this.host.onRulesChange?.();
   }
   private renderRules(): void {
     const rows = (kind: 'custom' | 'ignored') =>
@@ -246,6 +249,15 @@ export class NotableExplorer {
     this.hasData = hasData;
     this.candidates = analyzeCandidates(records, this.settings, this.research, this.dismissed);
     this.render();
+  }
+  customPrefixes(): RuleSettings['custom'] {
+    return this.settings.custom;
+  }
+  setActive(active: boolean): void {
+    this.active = active;
+    this.panel.hidden = !active;
+    if (!active) this.closeSelection();
+    this.syncMap();
   }
   clearCapture(): void {
     this.dismissed.clear();
@@ -391,7 +403,7 @@ export class NotableExplorer {
   private syncMap(): void {
     const map = this.host.map;
     const pins = map.getSource(NOTABLE_SOURCE) as GeoJSONSource | undefined;
-    if (pins) pins.setData(candidateFeatures(this.visible));
+    if (pins) pins.setData(candidateFeatures(this.active ? this.visible : []));
     const selected = this.visible.find((candidate) => candidate.key === this.selectedKey);
     const sightings = map.getSource(SIGHTINGS_SOURCE) as GeoJSONSource | undefined;
     if (sightings)
@@ -405,7 +417,7 @@ export class NotableExplorer {
       });
   }
   handleMapClick(point: PointLike): boolean {
-    if (!this.host.map.getLayer(NOTABLE_PINS)) return false;
+    if (!this.active || !this.host.map.getLayer(NOTABLE_PINS)) return false;
     const feature = this.host.map.queryRenderedFeatures(point, { layers: [NOTABLE_PINS] })[0];
     const candidate = this.visible.find((item) => item.id === feature?.properties?.['candidateId']);
     if (!candidate) return false;

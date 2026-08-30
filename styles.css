@@ -268,3 +268,55 @@ dialog .prefix-form { padding: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+/* Movement analysis shares the atlas palette; only the evidence overlay is new. */
+.analysis-switch {
+  display: flex;
+  margin-top: 0;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--fog);
+}
+.analysis-switch button {
+  flex: 1;
+  padding: 9px 4px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--slate);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.analysis-switch button[aria-pressed='true'] { background: var(--ink); color: white; }
+.analysis-switch + .notable-panel { margin-top: 12px; }
+.legend .movement-dot { background: var(--signal-ink); border-radius: 0; transform: rotate(45deg); }
+.movement-intro { font-size: 12px; line-height: 1.5; color: var(--slate); }
+.movement-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; padding: 10px 0; border-block: 1px solid var(--line); }
+.movement-metrics strong { display: block; font: 23px Georgia, serif; }
+.movement-metrics span { display: block; font-size: 10px; color: var(--slate); line-height: 1.5; }
+.movement-row { align-items: start; }
+.movement-symbol { flex: 0 0 22px; margin-top: 5px; width: 22px; height: 22px; text-align: center; border: 2px solid #172a46; color: #172a46; border-radius: 4px; font-size: 18px; line-height: 18px; }
+.trusted-saved { display: flex; align-items: center; gap: 10px; padding: 12px 2px; border-bottom: 1px solid var(--line); }
+.trusted-saved > span { flex: 1; min-width: 0; }
+.trusted-saved strong, .trusted-saved span span, .trusted-saved small { display: block; overflow-wrap: anywhere; font-size: 11px; }
+.trusted-saved small { color: var(--slate); margin-top: 4px; }
+.trusted-saved button { flex: 0 0 auto; }
+.movement-detail { width: 350px; }
+.window-evidence { border: 1px solid var(--line); border-left: 3px solid #172a46; border-radius: 6px; margin: 18px 0; padding: 0 12px 6px; background: var(--fog); }
+.window-evidence p, .movement-path-note { font-size: 11px; line-height: 1.5; color: var(--slate); }
+.threshold-list { list-style: none; padding: 0; font-size: 12px; line-height: 1.8; }
+.threshold-list .met { color: var(--ink); }
+.threshold-list .unmet { color: var(--slate); }
+.threshold-list li > span:first-child { display: inline-block; width: 14px; }
+.movement-timeline { padding: 0; list-style: none; max-height: 210px; overflow-y: auto; }
+.movement-timeline li { display: flex; gap: 9px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 11px; }
+.movement-timeline li > span { color: var(--slate); }
+.movement-timeline .in-window > span { color: #172a46; }
+.movement-timeline small { display: block; font-size: 10px; color: var(--slate); margin-top: 3px; overflow-wrap: anywhere; }
+.signal-history { display: block; width: 100%; height: 64px; }
+.signal-history path { stroke: var(--line); }
+.signal-history circle { fill: #172a46; opacity: 0.8; }
+.signal-caption { color: var(--slate); font-size: 10px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@media (max-width: 820px) { .movement-detail { width: min(350px, calc(100% - 24px)); } }

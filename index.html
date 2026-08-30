@@ -39,6 +39,10 @@
           </section>
           <input id="fileInput" type="file" accept=".csv,text/csv" multiple hidden />
 
+          <div class="analysis-switch" id="analysisSwitch" role="group" aria-label="Analysis">
+            <button type="button" id="showNotable" aria-pressed="true" aria-controls="notablePanel">Notable</button>
+            <button type="button" id="showMovement" aria-pressed="false" aria-controls="movementPanel">Counter-surveillance</button>
+          </div>
           <section class="notable-panel" id="notablePanel" aria-labelledby="notableHeading">
             <div class="section-heading"><h2 id="notableHeading">Notable detections</h2><button class="text-button small" type="button" id="rulesButton">Rules</button></div>
             <p id="notableWarning" class="notable-warning" role="status" hidden></p>
@@ -52,6 +56,20 @@
             <button class="text-button small" type="button" id="moreCandidates" hidden>Show 50 more</button>
             <button class="text-button small" type="button" id="restoreCandidates" hidden>Restore dismissed</button>
             <details class="evidence-coverage"><summary>What this CSV can tell us</summary><p id="notableCoverage"></p><p>These are clues, not confirmed devices. Rotating addresses can appear as separate candidates.</p></details>
+          </section>
+
+          <section class="notable-panel movement-panel" id="movementPanel" aria-labelledby="movementHeading" hidden>
+            <div class="section-heading"><h2 id="movementHeading">Seen along your drive</h2></div>
+            <p class="movement-intro">Repeated Bluetooth sightings as you move. Evidence of co-travel, not proof of surveillance.</p>
+            <label class="notable-sort"><span>Sensitivity</span><select id="movementSensitivity"><option value="high">High · more leads</option><option value="medium" selected>Medium · balanced</option><option value="low">Low · longer evidence</option></select></label>
+            <div class="category-chips" id="movementViews" aria-label="Movement results"></div>
+            <p id="movementWarning" class="notable-warning" role="status" hidden></p>
+            <p id="movementStatus" class="notable-summary" role="status" aria-live="polite"></p>
+            <div class="movement-metrics" id="movementMetrics"></div>
+            <ul class="candidate-list" id="movementList" aria-label="Devices seen along your drive"></ul>
+            <button type="button" class="text-button small" id="moreMovement" hidden>Show 50 more</button>
+            <details class="evidence-coverage"><summary>Data coverage &amp; limitations</summary><p id="movementCoverage"></p><p>One sighting per address per clock minute, across selected files. Locations use fixed 200 m anchors. All thresholds must hold within one rolling 12-hour window.</p><p>Re-logging limits, rotating addresses and export exclusions can hide evidence. Nothing is automatically trusted at the start. Empty results cannot establish that nothing traveled with you.</p></details>
+            <details class="evidence-coverage"><summary>About trusted devices</summary><p>Use Trusted to manage your saved list. Only a full SHA-256 digest of each normalized address and radio type is saved on this browser and local address. Hashes are pseudonymous, not encryption. Names, locations and sightings are never saved.</p><p>Trust suppresses movement candidacy only, not notable detections. Clearing captures keeps this list. Remove trust to restore eligibility immediately.</p></details>
           </section>
 
           <section class="filter-panel" id="filterPanel" hidden>
@@ -141,7 +159,7 @@
           </div>
 
           <div class="legend" id="legend" hidden>
-            <span><i class="wifi-dot"></i>Wi-Fi</span><span><i class="ble-dot"></i>Bluetooth</span><span><i class="notable-dot"></i>Candidate</span>
+            <span><i class="wifi-dot"></i>Wi-Fi</span><span><i class="ble-dot"></i>Bluetooth</span><span id="analysisLegend"><i class="notable-dot"></i>Notable</span>
           </div>
 
           <div class="empty-state" id="emptyState">
@@ -172,6 +190,18 @@
             <ul class="evidence-list" id="notableEvidence"></ul>
             <details class="evidence-coverage"><summary>Session files</summary><p id="notableSessions"></p></details>
             <button type="button" class="secondary-button full" id="dismissCandidate">Dismiss candidate for this tab</button>
+          </aside>
+
+          <aside class="detail-card notable-detail movement-detail" id="movementDetail" hidden aria-label="Movement evidence" aria-live="polite">
+            <button class="close-detail" id="closeMovement" type="button" aria-label="Close movement evidence">×</button>
+            <p class="eyebrow" id="movementDetailType"></p>
+            <h2 id="movementDetailName"></h2>
+            <p class="observation-note">Observed here: these are receiver positions, not a device location or a reconstructed device track. Shared routes and your own equipment can produce this pattern.</p>
+            <dl id="movementDetailList"></dl>
+            <div class="window-evidence" id="movementWindow"></div>
+            <h3>Signal history</h3><div id="movementSignal"></div>
+            <details class="evidence-coverage" open><summary>Independent-sighting timeline</summary><p class="movement-path-note">Receiver observation paths stay within each session and break at gaps over five minutes. ● marks the strongest window.</p><ol class="movement-timeline" id="movementTimeline"></ol><button type="button" class="text-button small" id="moreTimeline" hidden>Show 50 more sightings</button></details>
+            <button class="secondary-button full" type="button" id="trustMovement">Mark as trusted</button>
           </aside>
 
           <div class="coordinate-readout" id="coordinateReadout">Street map · OpenFreeMap tiles</div>
@@ -218,7 +248,7 @@
         <ul id="savedRules" class="saved-rules" aria-label="Custom and ignored prefixes"></ul>
         <div class="rule-actions"><button id="exportRules" class="secondary-button" type="button">Export rules</button><button id="importRules" class="secondary-button" type="button">Import rules</button><button id="resetRules" class="text-button danger" type="button">Reset custom rules</button></div>
         <input id="rulesFile" type="file" accept=".json,application/json" hidden />
-        <p class="dialog-copy">Only custom and ignored prefixes are remembered on this browser and local address. Captures and dismissed devices stay in this tab. Rule files contain no capture rows. Imports merge with your saved rules.</p>
+        <p class="dialog-copy">Custom and ignored prefixes are remembered on this browser and local address. The movement trusted-device list is stored separately and is not included in rule files. Captures and dismissed devices stay in this tab. Rule files contain no capture rows. Imports merge with your saved rules.</p>
         <p class="catalog-version" id="catalogVersion"></p>
         <p class="dialog-copy">Built-in rules are bundled locally; they never update over the network. Source links in candidate details open external research pages only when clicked.</p>
       </div>

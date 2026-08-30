@@ -13,6 +13,7 @@ Wardrive Atlas is a private, local-first viewer for Wi-Fi and Bluetooth survey f
 - Pan, zoom, and fit the view to the current data.
 - Clear all imported data from the tab at any time.
 - Find Flock, Axon, and Meta smart-glasses candidates using a bundled local rule catalog, with optional broader research leads.
+- Review Bluetooth addresses repeatedly seen along your drive, with local co-travel evidence and a reversible trusted-device list.
 
 ## Run it locally
 
@@ -108,15 +109,57 @@ Standard CSV exports do **not** retain Biscuit's live notable methods, probe beh
 
 Open **Rules** to add a three-byte prefix, category, and radio type, or ignore a prefix. Custom rules are explicitly labeled user-defined. An ignored prefix overrides built-in and custom matches for its selected radio types, without deleting ordinary observations. **Dismiss candidate for this tab** hides an individual result; **Restore dismissed** brings dismissed results back. Clearing data also clears dismissals.
 
-Only custom and ignored prefix rules are saved in browser storage, scoped to the browser and exact local origin (host and port). Captures, analysis results, research-toggle state, and individual-device dismissals are never automatically saved. Storage failures show a warning while rules continue working in memory.
+Custom and ignored prefix rules are saved in browser storage, scoped to the browser and exact local origin (host and port). The movement trusted-device list is saved separately, as described below. Captures, analysis results, research-toggle state, and individual-device dismissals are never automatically saved. Storage failures show a warning while rules continue working in memory.
 
 **Export rules** saves a versioned JSON configuration containing only custom and ignored prefixes. **Import rules** validates and merges it, deduplicating identical entries; invalid, unsupported, oversized files or combined lists above 500 entries per rule type leave current rules unchanged. **Reset custom rules** removes custom and ignored prefixes but leaves built-in signatures active. Rule files are limited to 128 KB. The schema accepts `version: 1`, `custom: [{prefix, category, protocol}]`, and `ignored: [{prefix, protocol}]`, with categories `flock`, `axon`, `meta` and protocols `Both`, `Wi-Fi`, `BLE`.
+
+## Counter-surveillance: seen along your drive
+
+Choose **Counter-surveillance** beside **Notable** in the sidebar. **Candidates** and **Medium** sensitivity are the defaults. Ordinary drive observations stay visible. Try the sample's fictional shared-route companion to explore the feature without a personal capture.
+
+- **Candidates**: Bluetooth addresses whose evidence meets every threshold in one rolling 12-hour window. This means **Co-travel candidate**, never confirmed surveillance or a threat probability. Your vehicle equipment and unrelated people sharing a route can qualify.
+- **Observed**: other Bluetooth addresses, including those with insufficient usable time or GPS evidence.
+- **Context**: Wi-Fi addresses and Bluetooth Flock/Axon signature matches. Context is not proof of fixed infrastructure; these addresses are not movement candidates. Default and custom camera signatures are considered independently of notable ignored prefixes or dismissals. Research-only signatures do not establish camera context. Meta-name clues do not suppress movement evidence.
+- **Trusted**: addresses you explicitly marked as trusted, including saved entries absent from the current captures. Removing trust immediately restores eligibility; ordinary observations and Notable detections never disappear because of trust.
+
+Select a list result (Enter/Space also work) or a diamond-arrow map marker to inspect its observations. Solid navy/amber diamonds indicate movement candidates; hollow diamonds indicate other movement views. The panel separates **whole-selected-range** totals from the **strongest-window** evidence, shows satisfied and unmet thresholds, and includes a signal-history plot and independent-sighting timeline. Signal values are not converted to distance. Map pins use the last independent sighting in each session; addresses without usable evidence remain selectable in the list and ordinary map but have no movement pin.
+
+Selected amber dots highlight filtered observations. Dashed **receiver observation paths** connect eligible independent sightings within a session only, breaking when a gap exceeds five minutes. They are not reconstructed device tracks. The overlay works in Points, Clusters, Heatmap and with street tiles disabled. Existing session, time, RSSI, radio, channel, security and band filters all constrain the analysis. Selected files are assumed to belong to the same recording user.
+
+### Exact calculations
+
+These defaults are inspired by [Biscuit's counter-surveillance guidance](https://codehedge.github.io/Biscuit-Wiki/features/counter-surveillance.html), reviewed August 30, 2026. Atlas implements the following explicit CSV calculations, not Biscuit scoring parity:
+
+| Sensitivity | Independent sightings | Locations | Elapsed time | Travel span |
+|---|---:|---:|---:|---:|
+| High | 2 | 2 | 5 minutes | 250 m |
+| Medium (default) | 3 | 2 | 10 minutes | 500 m |
+| Low | 4 | 2 | 20 minutes | 750 m |
+
+1. Group only by the normalized **full address and radio type**. Names, prefixes, RSSI and proximity never link different or rotating addresses. Invalid addresses cannot supply movement evidence.
+2. Require a finite timestamp, usable latitude/longitude (not the unset `0,0` fix), and reported accuracy **greater than zero and at most 75 m**. Missing/poor optional evidence never removes an imported observation. Coverage reports one exclusion reason per row, in priority order: address, time, position, accuracy. It also reports minute-level repeats separately. Coverage includes all radios; sidebar sighting/location totals refer to the current result view. Location totals sum per-address locations, not distinct geographic places across all devices.
+3. Keep at most one independent sighting per address per clock minute, including overlapping files. Choose the smallest reported accuracy radius, then earliest timestamp, then latitude/longitude order. Exact ties use session name and opaque row ID only for deterministic selection.
+4. In chronological order, assign each sighting to the earliest fixed anchor within 200 m, or create a new anchor at that position. Anchors remain fixed across the selected range; no centroids, transitive merges or route-length summation.
+5. Evaluate rolling windows of at most 12 hours (endpoints included). Every threshold must hold **in the same window**. Travel span is the maximum pairwise great-circle separation between qualifying receiver positions **minus both reported accuracy radii**, clamped to zero. This is a conservative receiver-position span, not device range or distance traveled.
+6. Pick the strongest window by qualification, number of separated locations, independent sightings, travel span, then most recent end time. Full-selected-range observation/session totals are shown separately and do not inflate that window's evidence.
+
+Calculations run in a local Web Worker. Filter changes are briefly debounced; superseded workers are terminated and stale responses discarded. Zod validates sensitivity, trust storage, and worker requests/responses. No live scanning, alerts, uploads, runtime research requests, baseline reconstruction or automatic trust is performed.
+
+CSV re-logging thresholds, rotating addresses, missing baseline rows and export exclusions limit coverage. A CSV cannot recover omitted observations or Biscuit's live tracking state. **Empty results cannot establish that nothing traveled with the recorder.**
+
+### Your trusted-device list
+
+Select an address and choose **Mark as trusted** for equipment you recognize. Use **Trusted** to select it and remove trust, or remove a saved entry even when its capture is no longer loaded. Entries present in loaded captures use the current hide/hash/show settings; absent entries show a digest-based alias (or “Hidden”). Nothing is trusted merely because it appears near the start.
+
+Only `{version: 1, devices: [{digest, type}]}` is saved under the separate `wardrive-atlas.co-travel-trust.v1` storage key. `digest` is the **full 64-hex-character SHA-256** of `wardrive-atlas:co-travel:v1|<radio>|<normalized address>`; `type` is `BLE` or `Wi-Fi`. No names, locations, timestamps, sightings, capture rows or results are stored. Digests are pseudonymous, **not encryption or guaranteed anonymity**. The list is local to this browser and exact host/port, independent of prefix-rule import/export/reset. It survives clearing captures and page reloads. Invalid or inaccessible saved settings show a warning and activate no trust entries; failed saves apply only to the current tab.
+
+Synthetic tests cover threshold boundaries, overlapping imports, stationary jitter, fixed anchors, 12-hour expiry, shuffled rows, protocol/context separation, trust restoration, worker cancellation and identifier-free map properties. Personal captures are never included in fixtures.
 
 ## Privacy and offline behavior
 
 Imported files are parsed in browser memory and are never sent to a server. Closing the tab clears the imported data. The app contains no analytics and makes no wardrive-data API requests.
 
-SSID/address privacy settings also cover candidate lists, details, and accessible labels. Opaque IDs—not names or addresses—are sent to the local map worker. Saved prefix rules are your configuration, not saved captures. Hash aliases conceal labels but are not encryption or proof of anonymity; raw rows still exist in this tab's memory while loaded.
+SSID/address privacy settings also cover notable and movement lists, details, timelines, trusted entries and accessible labels. Opaque IDs—not names, addresses, hashes or session filenames—are used in map feature properties. The separate local analysis worker receives imported rows in memory; it never sends them over the network. Saved prefix rules and trusted digests are configuration, not saved captures. Hash aliases conceal labels but are not encryption or proof of anonymity; raw rows still exist in this tab's memory while loaded.
 
 The street map uses the same technology as the MBTA Tracker project: MapLibre GL 5.24 with OpenFreeMap vector tiles and a local visual style. Enabling **Show street map** contacts OpenFreeMap for map tiles, fonts, and sprites, but never sends imported CSV contents. Turn the setting off to use the offline coordinate background without any tile requests. Previously loaded street tiles may remain in the browser cache.
 
@@ -129,10 +172,15 @@ The street map uses the same technology as the MBTA Tracker project: MapLibre GL
 - `src/notable-rules.ts` — Zod-validated, versioned signature snapshot and attribution
 - `src/notable.ts` — pure local matching, grouping, settings validation, and safe map projections
 - `src/notable-ui.ts` / `src/notable-pins.ts` — candidate explorer, rule editor, and locally drawn icon sprites
+- `src/co-travel.ts` / `src/co-travel-schema.ts` — pure movement analysis and validated evidence contracts
+- `src/co-travel-worker.ts` / `src/co-travel-runner.ts` — local computation, boundary validation, and cancellation
+- `src/co-travel-ui.ts` / `src/co-travel-map.ts` — evidence explorer and identifier-free movement overlays
+- `src/co-travel-trust.ts` — versioned digest-only trusted-device storage
 - `map-styles/atlas-map.json` — local MapLibre style using OpenFreeMap vector tiles
 - `vite.config.ts` — local-only development and preview server configuration
 - `test/csv.test.ts` — focused Vitest importer and schema tests
 - `test/notable.test.ts` — synthetic signature, false-positive, grouping, and settings tests (no personal captures)
+- `test/co-travel.test.ts` — synthetic movement, windows, trust, worker and map projection tests
 - `tsconfig.json` — strict compiler rules aligned with MBTATracker and FitForge
 - `build.gradle` — npm-backed lint, test, build, and local app tasks
 - `gradlew` / `gradlew.bat` — pinned Gradle 9.7.1 wrapper launchers
