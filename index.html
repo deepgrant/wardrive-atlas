@@ -30,7 +30,7 @@
           <section class="intro-panel">
             <p class="eyebrow">Your private signal survey</p>
             <h1>See what your drive collected.</h1>
-            <p>Drop in Biscuit CSV files. Explore every point here—no account, upload, or map service.</p>
+            <p>Drop in Biscuit CSV files. Explore every point here—no account or upload. Street maps are optional.</p>
           </section>
 
           <section class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="Choose or drop CSV files">
@@ -38,6 +38,40 @@
             <div><strong>Drop CSV files here</strong><span>or choose files from your computer</span></div>
           </section>
           <input id="fileInput" type="file" accept=".csv,text/csv" multiple hidden />
+
+          <div class="analysis-switch" id="analysisSwitch" role="group" aria-label="Analysis">
+            <button type="button" id="showNotable" aria-pressed="true" aria-controls="notablePanel">Notable</button>
+            <button type="button" id="showMovement" aria-pressed="false" aria-controls="movementPanel">Counter-surveillance</button>
+          </div>
+          <section class="notable-panel" id="notablePanel" aria-labelledby="notableHeading">
+            <div class="section-heading"><h2 id="notableHeading">Notable detections</h2><button class="text-button small" type="button" id="rulesButton">Rules</button></div>
+            <p id="notableWarning" class="notable-warning" role="status" hidden></p>
+            <p class="notable-summary" id="notableSummary" role="status"></p>
+            <div id="notableControls" hidden>
+              <div class="category-chips" id="notableCategories" aria-label="Candidate categories"></div>
+              <label class="route-toggle research-toggle"><input type="checkbox" id="researchToggle" /><span><strong>Include research leads</strong><small>Shared hardware prefixes · more false positives</small></span></label>
+              <label class="notable-sort"><span>Sort by</span><select id="notableSort"><option value="evidence">Evidence, then signal</option><option value="signal">Strongest signal</option><option value="recent">Most recently seen</option></select></label>
+            </div>
+            <ul class="candidate-list" id="notableList" aria-label="Candidate detections"></ul>
+            <button class="text-button small" type="button" id="moreCandidates" hidden>Show 50 more</button>
+            <button class="text-button small" type="button" id="restoreCandidates" hidden>Restore dismissed</button>
+            <details class="evidence-coverage"><summary>What this CSV can tell us</summary><p id="notableCoverage"></p><p>These are clues, not confirmed devices. Rotating addresses can appear as separate candidates.</p></details>
+          </section>
+
+          <section class="notable-panel movement-panel" id="movementPanel" aria-labelledby="movementHeading" hidden>
+            <div class="section-heading"><h2 id="movementHeading">Seen along your drive</h2></div>
+            <p class="movement-intro">Repeated Bluetooth sightings as you move. Evidence of co-travel, not proof of surveillance.</p>
+            <label class="notable-sort"><span>Sensitivity</span><select id="movementSensitivity"><option value="high">High · more leads</option><option value="medium" selected>Medium · balanced</option><option value="low">Low · longer evidence</option></select></label>
+            <div class="category-chips" id="movementViews" aria-label="Movement results"></div>
+            <p id="movementWarning" class="notable-warning" role="status" hidden></p>
+            <ul class="candidate-list" id="movementTrustChanges" aria-label="Tab-only trust changes" hidden></ul>
+            <p id="movementStatus" class="notable-summary" role="status" aria-live="polite"></p>
+            <div class="movement-metrics" id="movementMetrics"></div>
+            <ul class="candidate-list" id="movementList" aria-label="Devices seen along your drive"></ul>
+            <button type="button" class="text-button small" id="moreMovement" hidden>Show 50 more</button>
+            <details class="evidence-coverage"><summary>Data coverage &amp; limitations</summary><p id="movementCoverage"></p><p>One sighting per address per clock minute, across selected files. Locations use fixed 200 m anchors. All thresholds must hold within one rolling 12-hour window.</p><p>Re-logging limits, rotating addresses and export exclusions can hide evidence. Nothing is automatically trusted at the start. Empty results cannot establish that nothing traveled with you.</p></details>
+            <details class="evidence-coverage"><summary>About trusted devices</summary><p>Use Trusted to manage your saved list. Only a full SHA-256 digest of each normalized address and radio type is saved on this browser and local address. Hashes are pseudonymous, not encryption. Names, locations and sightings are never saved.</p><p>Trust suppresses movement candidacy only, not notable detections. Clearing captures keeps this list. Remove trust to restore eligibility immediately.</p><p>Saved trust changes synchronize between Atlas tabs on this local address. If a safe save is unavailable, the change is labeled Tab-only and stays here until this page closes. Use Save change to explicitly retry one change; other actions never save it automatically.</p></details>
+          </section>
 
           <section class="filter-panel" id="filterPanel" hidden>
             <div class="section-heading">
@@ -126,7 +160,7 @@
           </div>
 
           <div class="legend" id="legend" hidden>
-            <span><i class="wifi-dot"></i>Wi-Fi</span><span><i class="ble-dot"></i>Bluetooth</span>
+            <span><i class="wifi-dot"></i>Wi-Fi</span><span><i class="ble-dot"></i>Bluetooth</span><span id="analysisLegend"><i class="notable-dot"></i>Notable</span>
           </div>
 
           <div class="empty-state" id="emptyState">
@@ -145,6 +179,30 @@
             <p class="eyebrow" id="detailType">Wi-Fi signal</p>
             <h2 id="detailName">Network</h2>
             <dl id="detailList"></dl>
+          </aside>
+
+          <aside class="detail-card notable-detail" id="notableDetail" hidden aria-label="Candidate details" aria-live="polite">
+            <button class="close-detail" id="closeNotable" type="button" aria-label="Close candidate details">×</button>
+            <p class="eyebrow" id="notableDetailType"></p>
+            <h2 id="notableDetailName"></h2>
+            <p class="observation-note">Observed here, not located here. Pins show receiver positions; they do not confirm a camera or its installation site.</p>
+            <dl id="notableDetailList"></dl>
+            <h3>Why it was flagged</h3>
+            <ul class="evidence-list" id="notableEvidence"></ul>
+            <details class="evidence-coverage"><summary>Session files</summary><p id="notableSessions"></p></details>
+            <button type="button" class="secondary-button full" id="dismissCandidate">Dismiss candidate for this tab</button>
+          </aside>
+
+          <aside class="detail-card notable-detail movement-detail" id="movementDetail" hidden aria-label="Movement evidence" aria-live="polite">
+            <button class="close-detail" id="closeMovement" type="button" aria-label="Close movement evidence">×</button>
+            <p class="eyebrow" id="movementDetailType"></p>
+            <h2 id="movementDetailName"></h2>
+            <p class="observation-note">Observed here: these are receiver positions, not a device location or a reconstructed device track. Shared routes and your own equipment can produce this pattern.</p>
+            <dl id="movementDetailList"></dl>
+            <div class="window-evidence" id="movementWindow"></div>
+            <h3>Signal history</h3><div id="movementSignal"></div>
+            <details class="evidence-coverage" open><summary>Independent-sighting timeline</summary><p class="movement-path-note">Receiver observation paths stay within each session and break at gaps over five minutes. ● marks the strongest window.</p><ol class="movement-timeline" id="movementTimeline"></ol><button type="button" class="text-button small" id="moreTimeline" hidden>Show 50 more sightings</button></details>
+            <button class="secondary-button full" type="button" id="trustMovement">Mark as trusted</button>
           </aside>
 
           <div class="coordinate-readout" id="coordinateReadout">Street map · OpenFreeMap tiles</div>
@@ -174,6 +232,27 @@
         <div class="privacy-note"><span aria-hidden="true">✓</span><p><strong>No data uploads or analytics.</strong><br />Street tiles contact OpenFreeMap only while the street map is enabled. Closing this tab clears imported data from memory.</p></div>
         <button class="primary-button full" value="done">Apply privacy settings</button>
       </form>
+    </dialog>
+
+    <dialog id="rulesDialog" aria-labelledby="rulesHeading">
+      <div class="rules-content">
+        <div class="dialog-heading"><div><p class="eyebrow">Local detection rules</p><h2 id="rulesHeading">Follow your own leads.</h2></div><button class="dialog-close" type="button" id="closeRules" aria-label="Close rules">×</button></div>
+        <p class="dialog-copy">Add an address prefix to flag candidates, or ignore a prefix to quiet false positives. Ignoring never removes ordinary observations.</p>
+        <form id="prefixForm" class="prefix-form">
+          <label>Prefix (first three bytes)<input name="prefix" type="text" placeholder="B4:1E:52" maxlength="8" required autocomplete="off" spellcheck="false" /></label>
+          <label>Action<select name="action"><option value="add">Flag as a candidate</option><option value="ignore">Ignore this prefix</option></select></label>
+          <label>Category<select name="category"><option value="flock">Flock</option><option value="axon">Axon</option><option value="meta">Meta glasses</option></select></label>
+          <label>Radio type<select name="protocol"><option value="Both">Wi-Fi and Bluetooth</option><option value="Wi-Fi">Wi-Fi only</option><option value="BLE">Bluetooth only</option></select></label>
+          <button class="primary-button" type="submit">Save prefix</button>
+        </form>
+        <p class="dialog-copy" id="ruleStatus" role="status"></p>
+        <ul id="savedRules" class="saved-rules" aria-label="Custom and ignored prefixes"></ul>
+        <div class="rule-actions"><button id="exportRules" class="secondary-button" type="button">Export rules</button><button id="importRules" class="secondary-button" type="button">Import rules</button><button id="resetRules" class="text-button danger" type="button">Reset custom rules</button></div>
+        <input id="rulesFile" type="file" accept=".json,application/json" hidden />
+        <p class="dialog-copy">Custom and ignored prefixes are remembered on this browser and local address. The movement trusted-device list is stored separately and is not included in rule files. Captures and dismissed devices stay in this tab. Rule files contain no capture rows. Imports merge with your saved rules.</p>
+        <p class="catalog-version" id="catalogVersion"></p>
+        <p class="dialog-copy">Built-in rules are bundled locally; they never update over the network. Source links in candidate details open external research pages only when clicked.</p>
+      </div>
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
