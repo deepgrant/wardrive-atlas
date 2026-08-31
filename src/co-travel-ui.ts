@@ -1,6 +1,6 @@
 import type { Map as AtlasMap, GeoJSONSource, PointLike } from 'maplibre-gl';
 import type { WardriveRecord } from './csv';
-import type { RuleSettings, RuleStorage } from './notable';
+import type { RuleSettings } from './notable';
 import { assessmentView, usablePosition } from './co-travel';
 import { CoTravelRunner } from './co-travel-runner';
 import {
@@ -13,7 +13,8 @@ import {
   type CoTravelView,
   type Sensitivity,
 } from './co-travel-schema';
-import { loadTrustedDevices, saveTrustedDevices, type TrustedDevice, type TrustedSettings } from './co-travel-trust';
+import { trustedIdentity as trustKey, type TrustedDevice, type TrustOperation } from './co-travel-trust';
+import { createBrowserTrustController } from './co-travel-trust-browser';
 import { movementPins, movementSelection } from './co-travel-map';
 
 export const MOVEMENT_PINS = 'movement-pins';
@@ -41,8 +42,6 @@ function meters(value: number): string {
 function span(first: number, last: number): string {
   return `${((last - first) / 60_000).toFixed(1)} min`;
 }
-const trustKey = (entry: TrustedDevice): string => `${entry.type}:${entry.digest}`;
-
 interface ExplorerHost {
   map: AtlasMap;
   name(record: WardriveRecord): string;
@@ -58,13 +57,10 @@ export class CoTravelExplorer {
   private readonly runner = new CoTravelRunner(
     () => new Worker(new URL('./co-travel-worker.ts', import.meta.url), { type: 'module' }),
   );
-  private readonly storage: RuleStorage = {
-    getItem: (key) => window.localStorage.getItem(key),
-    setItem: (key, value) => window.localStorage.setItem(key, value),
-  };
-  private trusted: TrustedSettings;
+  private readonly trustController = createBrowserTrustController();
+  private trustState = this.trustController.getSnapshot();
+  private readonly unsubscribeTrust: () => void;
   private trustKeys = new Set<string>();
-  private trustWarning: string;
   private error = '';
   private active = false;
   private busy = false;
@@ -81,10 +77,6 @@ export class CoTravelExplorer {
   private timelineLimit = 50;
 
   constructor(private readonly host: ExplorerHost) {
-    const loaded = loadTrustedDevices(this.storage);
-    this.trusted = loaded.settings;
-    this.trustWarning = loaded.warning ?? '';
-    this.rebuildTrustKeys();
     el<HTMLSelectElement>('movementSensitivity').addEventListener('change', (event) => {
       const result = SensitivitySchema.safeParse((event.currentTarget as HTMLSelectElement).value);
       if (!result.success) return;
@@ -105,11 +97,11 @@ export class CoTravelExplorer {
     const activate = (event: MouseEvent | KeyboardEvent): void => {
       if (event instanceof KeyboardEvent && event.key !== 'Enter' && event.key !== ' ') return;
       const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('button') : null;
-      if (!button) return;
+      if (!button || button.disabled) return;
       if (event instanceof KeyboardEvent) event.preventDefault();
       if (button.dataset['untrust'] !== undefined) {
-        const entry = this.trusted.devices[Number(button.dataset['untrust'])];
-        if (entry) this.removeTrust(entry);
+        const entry = this.trustState.settings.devices[Number(button.dataset['untrust'])];
+        if (entry) this.changeTrust({ action: 'untrust', device: entry });
         el('movementViews').querySelector<HTMLButtonElement>('[data-movement-view="trusted"]')?.focus();
       } else {
         const result = this.visible.find((item) => item.id === button.dataset['movement']);
@@ -118,6 +110,14 @@ export class CoTravelExplorer {
     };
     el('movementList').addEventListener('click', activate);
     el('movementList').addEventListener('keydown', activate);
+    el('movementTrustChanges').addEventListener('click', (event) => {
+      const button =
+        event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-save-trust]') : null;
+      if (!button || button.disabled) return;
+      const operation = this.trustState.overrides[Number(button.dataset['saveTrust'])];
+      if (operation) this.changeTrust(operation);
+      el('movementViews').querySelector<HTMLButtonElement>('[data-movement-view="trusted"]')?.focus();
+    });
     el('moreMovement').addEventListener('click', () => {
       this.listLimit += 50;
       this.render();
@@ -131,19 +131,17 @@ export class CoTravelExplorer {
       const assessment = this.analysis.assessments.find((item) => item.id === this.selectedId);
       const record = assessment && this.recordsById.get(assessment.representativeId);
       const digest = record && this.host.digest(record);
-      if (!record || !digest) return;
+      if (!record || !digest || this.trustState.pending) return;
       const entry = { digest, type: record.type };
-      if (this.trustKeys.has(trustKey(entry))) this.removeTrust(entry);
-      else if (this.trusted.devices.length < 10_000) {
-        this.trusted.devices.push(entry);
-        this.saveTrust();
-      } else {
-        this.trustWarning = 'The trusted list is full. Remove an entry before adding another.';
-        this.render();
-      }
+      this.changeTrust({ action: this.trustKeys.has(trustKey(entry)) ? 'untrust' : 'trust', device: entry });
       el('movementViews').querySelector<HTMLButtonElement>(`[data-movement-view="${this.view}"]`)?.focus();
     });
-    this.render();
+    this.unsubscribeTrust = this.trustController.subscribe((state) => {
+      this.trustState = state;
+      this.trustKeys = new Set(state.settings.devices.map(trustKey));
+      // Trust changes only presentation, never the worker's movement evidence.
+      this.render();
+    });
   }
 
   setActive(active: boolean): void {
@@ -194,25 +192,26 @@ export class CoTravelExplorer {
   refreshPrivacy(): void {
     this.render();
   }
-  private rebuildTrustKeys(): void {
-    this.trustKeys = new Set(this.trusted.devices.map(trustKey));
+  dispose(): void {
+    clearTimeout(this.timer);
+    this.runner.cancel();
+    this.unsubscribeTrust();
+    this.trustController.dispose();
   }
   private isTrusted(assessment: CoTravelAssessment): boolean {
     const record = this.recordsById.get(assessment.representativeId);
     const digest = record && this.host.digest(record);
     return !!record && !!digest && this.trustKeys.has(trustKey({ type: record.type, digest }));
   }
-  private removeTrust(entry: TrustedDevice): void {
-    this.trusted.devices = this.trusted.devices.filter((item) => trustKey(item) !== trustKey(entry));
-    this.saveTrust();
+  private changeTrust(operation: TrustOperation): void {
+    if (this.trustState.pending) return;
+    // Capture the explicit action and target now, not after a render or lock wait.
+    void this.trustController.mutate({ action: operation.action, device: { ...operation.device } });
   }
-  private saveTrust(): void {
-    this.rebuildTrustKeys();
-    this.trustWarning = saveTrustedDevices(this.storage, this.trusted)
-      ? ''
-      : 'Trust changes apply in this tab, but browser storage could not be updated. The previously saved list may return after reload.';
-    this.closeSelection();
-    this.render();
+  private trustNote(entry: TrustedDevice): string {
+    const override = this.trustState.overrides.find((operation) => trustKey(operation.device) === trustKey(entry));
+    if (override) return override.action === 'trust' ? 'Tab-only: trusted' : 'Tab-only: trust removed';
+    return this.trustKeys.has(trustKey(entry)) ? 'Saved trust' : '';
   }
   private status(assessment: CoTravelAssessment): string {
     if (this.isTrusted(assessment)) return 'Trusted';
@@ -223,11 +222,14 @@ export class CoTravelExplorer {
     return assessment.window?.qualifies ? 'Co-travel candidate' : 'Observed';
   }
   private render(): void {
+    const focused = document.activeElement;
+    const focusedView = focused instanceof HTMLElement ? focused.dataset['movementView'] : undefined;
+    const focusedResult = focused instanceof HTMLElement ? focused.dataset['movement'] : undefined;
     const counts: Record<CoTravelView, number> = {
       candidates: 0,
       observed: 0,
       context: 0,
-      trusted: this.trusted.devices.length,
+      trusted: this.trustState.settings.devices.length,
     };
     this.visible = this.analysis.assessments.filter((item) => {
       const view = assessmentView(item, this.isTrusted(item));
@@ -240,14 +242,28 @@ export class CoTravelExplorer {
           `<button type="button" data-movement-view="${view}" aria-pressed="${this.view === view}">${VIEW_LABELS[view]} <b>${this.busy && view !== 'trusted' ? '…' : counts[view]}</b></button>`,
       )
       .join('');
-    const warning = [this.trustWarning, this.error].filter(Boolean).join(' ');
+    const warning = [
+      this.trustState.warning,
+      this.trustState.overrides.length ? 'Open Trusted to save a tab-only change explicitly.' : '',
+      this.error,
+    ]
+      .filter(Boolean)
+      .join(' ');
     el('movementWarning').textContent = warning;
     el('movementWarning').hidden = !warning;
+    el('movementTrustChanges').hidden = this.view !== 'trusted' || !this.trustState.overrides.length;
+    el('movementTrustChanges').innerHTML = this.trustState.overrides
+      .map((operation, index) => {
+        const entry = operation.device;
+        const loaded = this.loadedByDigest.get(trustKey(entry));
+        return `<li class="trusted-saved"><span><strong>${escape(this.trustNote(entry))}</strong><span>${escape(loaded ? this.host.name(loaded) : 'Address not in loaded captures')}</span><span>${escape(loaded ? this.host.address(loaded) : this.host.alias(entry.digest))} · ${entry.type}</span></span><button type="button" class="text-button small" data-save-trust="${index}" ${this.trustState.pending ? 'disabled' : ''}>Save change</button></li>`;
+      })
+      .join('');
     el('movementList').setAttribute('aria-busy', String(this.busy));
     el('movementStatus').textContent = this.busy
       ? 'Reviewing evidence on this device…'
       : this.view === 'trusted'
-        ? `${counts.trusted} saved trusted addresses · ${this.visible.length} in this filtered view`
+        ? `${counts.trusted} trusted addresses · ${this.trustState.saved.devices.length} saved · ${this.trustState.overrides.length} tab-only changes · ${this.visible.length} in this filtered view`
         : `${counts.candidates.toLocaleString()} qualifying Bluetooth addresses · ${this.sensitivity} sensitivity`;
     const sightings = this.visible.reduce((sum, item) => sum + item.sightings.length, 0);
     const locations = this.visible.reduce((sum, item) => sum + item.locations, 0);
@@ -257,7 +273,9 @@ export class CoTravelExplorer {
     const rows = this.visible.slice(0, this.listLimit).map((item) => {
       const record = this.recordsById.get(item.representativeId)!;
       const window = item.window;
-      return `<li><button type="button" class="candidate-row movement-row" data-movement="${item.id}" aria-pressed="${item.id === this.selectedId}"><span class="movement-symbol" aria-hidden="true">↗</span><span class="candidate-copy"><strong>${escape(this.status(item))}</strong><span>${escape(this.host.name(record))}</span><span class="candidate-address">${escape(this.host.address(record))} · ${item.type}</span><small>${window ? `${window.sightingIds.length} sightings · ${window.locations} places · ${span(window.first, window.last)} · ${meters(window.travelMeters)}` : 'No usable time / GPS evidence'}</small><small>${item.sessions} ${item.sessions === 1 ? 'session' : 'sessions'} · strongest window above</small></span></button></li>`;
+      const digest = this.host.digest(record);
+      const note = digest ? this.trustNote({ digest, type: record.type }) : '';
+      return `<li><button type="button" class="candidate-row movement-row" data-movement="${item.id}" aria-pressed="${item.id === this.selectedId}"><span class="movement-symbol" aria-hidden="true">↗</span><span class="candidate-copy"><strong>${escape(this.status(item))}</strong><span>${escape(this.host.name(record))}</span><span class="candidate-address">${escape(this.host.address(record))} · ${item.type}</span><small>${window ? `${window.sightingIds.length} sightings · ${window.locations} places · ${span(window.first, window.last)} · ${meters(window.travelMeters)}` : 'No usable time / GPS evidence'}</small><small>${item.sessions} ${item.sessions === 1 ? 'session' : 'sessions'} · strongest window above</small>${note ? `<small>${escape(note)}</small>` : ''}</span></button></li>`;
     });
     if (this.view === 'trusted') {
       // Entries absent from filtered data are still reversible, even after clearing captures.
@@ -267,11 +285,11 @@ export class CoTravelExplorer {
           return trustKey({ type: record.type, digest: this.host.digest(record)! });
         }),
       );
-      this.trusted.devices.forEach((entry, index) => {
+      this.trustState.settings.devices.forEach((entry, index) => {
         if (represented.has(trustKey(entry)) || rows.length >= this.listLimit) return;
         const loaded = this.loadedByDigest.get(trustKey(entry));
         rows.push(
-          `<li class="trusted-saved"><span><strong>${escape(loaded ? this.host.name(loaded) : 'Saved trusted address')}</strong><span>${escape(loaded ? this.host.address(loaded) : this.host.alias(entry.digest))} · ${entry.type}</span><small>${loaded ? 'Outside current filters' : 'Not in loaded captures'}</small></span><button type="button" class="text-button small" data-untrust="${index}">Remove trust</button></li>`,
+          `<li class="trusted-saved"><span><strong>${escape(loaded ? this.host.name(loaded) : 'Trusted address')}</strong><span>${escape(loaded ? this.host.address(loaded) : this.host.alias(entry.digest))} · ${entry.type}</span><small>${escape(this.trustNote(entry))} · ${loaded ? 'Outside current filters' : 'Not in loaded captures'}</small></span><button type="button" class="text-button small" data-untrust="${index}" ${this.trustState.pending ? 'disabled' : ''}>Remove trust</button></li>`,
         );
       });
     }
@@ -287,6 +305,19 @@ export class CoTravelExplorer {
     if (selected) this.renderDetail(selected);
     else this.closeSelection();
     this.syncMap();
+    // Cross-tab refreshes keep keyboard focus and valid selection in place.
+    if (focusedView)
+      el('movementViews')
+        .querySelector<HTMLButtonElement>(`[data-movement-view="${focusedView}"]`)
+        ?.focus({ preventScroll: true });
+    else if (focusedResult && selected)
+      el('movementList')
+        .querySelector<HTMLButtonElement>(`[data-movement="${focusedResult}"]`)
+        ?.focus({ preventScroll: true });
+    else if ((focusedResult || focused === el('trustMovement')) && !selected)
+      el('movementViews')
+        .querySelector<HTMLButtonElement>(`[data-movement-view="${this.view}"]`)
+        ?.focus({ preventScroll: true });
   }
   private select(assessment: CoTravelAssessment): void {
     this.host.onSelect();
@@ -329,6 +360,12 @@ export class CoTravelExplorer {
     const entries = [
       ['Address', this.host.address(record)],
       ['Radio', record.type],
+      [
+        'Your trust',
+        this.host.digest(record)
+          ? this.trustNote({ digest: this.host.digest(record)!, type: record.type }) || 'Not trusted'
+          : 'Unavailable',
+      ],
       ['Selected-range rows', assessment.recordIds.length],
       ['Independent sightings', assessment.sightings.length],
       ['Separated locations', assessment.locations],
@@ -383,12 +420,14 @@ export class CoTravelExplorer {
     el('moreTimeline').hidden = independent.length <= this.timelineLimit;
     this.renderSignal(independent.map((item) => item.record));
     const trustButton = el<HTMLButtonElement>('trustMovement');
-    trustButton.disabled = !this.host.digest(record);
-    trustButton.textContent = this.isTrusted(assessment)
-      ? 'Remove trust — restore eligibility'
-      : trustButton.disabled
-        ? 'A valid address is needed to save trust'
-        : 'Mark as trusted';
+    trustButton.disabled = this.trustState.pending || !this.host.digest(record);
+    trustButton.textContent = this.trustState.pending
+      ? 'Saving trust change…'
+      : this.isTrusted(assessment)
+        ? 'Remove trust — restore eligibility'
+        : trustButton.disabled
+          ? 'A valid address is needed to save trust'
+          : 'Mark as trusted';
     el('movementDetail').hidden = false;
   }
   private renderSignal(records: WardriveRecord[]): void {

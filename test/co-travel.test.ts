@@ -22,7 +22,7 @@ import {
 import {
   identityDigest,
   loadTrustedDevices,
-  saveTrustedDevices,
+  TrustStateController,
   TRUST_KEY,
   TrustedSettingsSchema,
 } from '../src/co-travel-trust';
@@ -295,7 +295,8 @@ describe('trusted devices', () => {
     expect(await identityDigest(row(0, 0, { bssid: 'invalid' }))).toBeNull();
     const store = storage();
     const settings = { version: 1 as const, devices: [{ digest: a!, type: 'BLE' as const }] };
-    expect(saveTrustedDevices(store, settings)).toBe(true);
+    const trust = new TrustStateController({ storage: store, lock: { run: async (_, operation) => operation() } });
+    expect(await trust.mutate({ action: 'trust', device: settings.devices[0] })).toBe('saved');
     expect(loadTrustedDevices(store).settings).toEqual(settings);
     expect([...store.data.keys()]).toEqual([TRUST_KEY]);
     expect(store.data.get(TRUST_KEY)).not.toMatch(/ssid|latitude|longitude|DA:10|Synthetic|session/i);
@@ -311,7 +312,7 @@ describe('trusted devices', () => {
       expect(loadTrustedDevices(store)).toMatchObject({ settings: { devices: [] }, warning: expect.any(String) });
     },
   );
-  it('handles storage denial and restores trusted vehicle equipment eligibility without deleting evidence', () => {
+  it('handles storage denial and restores trusted vehicle equipment eligibility without deleting evidence', async () => {
     const store = {
       getItem: () => {
         throw new Error();
@@ -321,7 +322,8 @@ describe('trusted devices', () => {
       },
     };
     expect(loadTrustedDevices(store).warning).toBeTruthy();
-    expect(saveTrustedDevices(store, { version: 1, devices: [] })).toBe(false);
+    const trust = new TrustStateController({ storage: store, lock: { run: async (_, operation) => operation() } });
+    expect(await trust.mutate({ action: 'trust', device: { digest: 'a'.repeat(64), type: 'BLE' } })).toBe('tab-only');
     const vehicle = assess(drive().map((record) => ({ ...record, ssid: 'Synthetic vehicle equipment' })));
     expect(assessmentView(vehicle, true)).toBe('trusted');
     expect(assessmentView(vehicle, false)).toBe('candidates');

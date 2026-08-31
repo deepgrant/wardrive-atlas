@@ -958,6 +958,7 @@ const movementExplorer = new CoTravelExplorer({
     notableExplorer.closeSelection();
   },
 });
+import.meta.hot?.dispose(() => movementExplorer.dispose());
 for (const id of ['showNotable', 'showMovement'])
   requiredElement(id).addEventListener('click', () => {
     const movement = id === 'showMovement';

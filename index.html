@@ -64,12 +64,13 @@
             <label class="notable-sort"><span>Sensitivity</span><select id="movementSensitivity"><option value="high">High · more leads</option><option value="medium" selected>Medium · balanced</option><option value="low">Low · longer evidence</option></select></label>
             <div class="category-chips" id="movementViews" aria-label="Movement results"></div>
             <p id="movementWarning" class="notable-warning" role="status" hidden></p>
+            <ul class="candidate-list" id="movementTrustChanges" aria-label="Tab-only trust changes" hidden></ul>
             <p id="movementStatus" class="notable-summary" role="status" aria-live="polite"></p>
             <div class="movement-metrics" id="movementMetrics"></div>
             <ul class="candidate-list" id="movementList" aria-label="Devices seen along your drive"></ul>
             <button type="button" class="text-button small" id="moreMovement" hidden>Show 50 more</button>
             <details class="evidence-coverage"><summary>Data coverage &amp; limitations</summary><p id="movementCoverage"></p><p>One sighting per address per clock minute, across selected files. Locations use fixed 200 m anchors. All thresholds must hold within one rolling 12-hour window.</p><p>Re-logging limits, rotating addresses and export exclusions can hide evidence. Nothing is automatically trusted at the start. Empty results cannot establish that nothing traveled with you.</p></details>
-            <details class="evidence-coverage"><summary>About trusted devices</summary><p>Use Trusted to manage your saved list. Only a full SHA-256 digest of each normalized address and radio type is saved on this browser and local address. Hashes are pseudonymous, not encryption. Names, locations and sightings are never saved.</p><p>Trust suppresses movement candidacy only, not notable detections. Clearing captures keeps this list. Remove trust to restore eligibility immediately.</p></details>
+            <details class="evidence-coverage"><summary>About trusted devices</summary><p>Use Trusted to manage your saved list. Only a full SHA-256 digest of each normalized address and radio type is saved on this browser and local address. Hashes are pseudonymous, not encryption. Names, locations and sightings are never saved.</p><p>Trust suppresses movement candidacy only, not notable detections. Clearing captures keeps this list. Remove trust to restore eligibility immediately.</p><p>Saved trust changes synchronize between Atlas tabs on this local address. If a safe save is unavailable, the change is labeled Tab-only and stays here until this page closes. Use Save change to explicitly retry one change; other actions never save it automatically.</p></details>
           </section>
 
           <section class="filter-panel" id="filterPanel" hidden>
