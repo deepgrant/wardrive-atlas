@@ -1,0 +1,751 @@
+{
+  "version": "2026-08-30.1",
+  "reviewed": "2026-08-30",
+  "rules": [
+    {
+      "id": "flock-oui",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi",
+        "BLE"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "B41E52",
+        "allowLocal": false
+      },
+      "research": false,
+      "custom": false,
+      "explanation": "Published Flock vendor prefix. A prefix identifies an address allocation, not the physical device type.",
+      "source": "https://codehedge.github.io/Biscuit-Wiki/3rd-party-integration/wardrive.html",
+      "sourceLabel": "Biscuit Wiki"
+    },
+    {
+      "id": "flock-company",
+      "category": "flock",
+      "protocols": [
+        "BLE"
+      ],
+      "match": {
+        "kind": "manufacturer",
+        "value": "09C8"
+      },
+      "research": false,
+      "custom": false,
+      "explanation": "The exported Bluetooth manufacturer ID matches the published Flock signature. Advertisement payload was not available for verification.",
+      "source": "https://codehedge.github.io/Biscuit-Wiki/3rd-party-integration/wardrive.html",
+      "sourceLabel": "Biscuit Wiki"
+    },
+    {
+      "id": "flock-name-0",
+      "category": "flock",
+      "protocols": [
+        "BLE"
+      ],
+      "match": {
+        "kind": "name",
+        "value": "Penguin-",
+        "mode": "starts"
+      },
+      "research": false,
+      "custom": false,
+      "explanation": "The Bluetooth name matches a published Flock naming pattern. Device names can be changed or imitated.",
+      "source": "https://codehedge.github.io/Biscuit-Wiki/3rd-party-integration/wardrive.html",
+      "sourceLabel": "Biscuit Wiki"
+    },
+    {
+      "id": "flock-name-1",
+      "category": "flock",
+      "protocols": [
+        "BLE"
+      ],
+      "match": {
+        "kind": "name",
+        "value": "Flock-",
+        "mode": "starts"
+      },
+      "research": false,
+      "custom": false,
+      "explanation": "The Bluetooth name matches a published Flock naming pattern. Device names can be changed or imitated.",
+      "source": "https://codehedge.github.io/Biscuit-Wiki/3rd-party-integration/wardrive.html",
+      "sourceLabel": "Biscuit Wiki"
+    },
+    {
+      "id": "flock-name-2",
+      "category": "flock",
+      "protocols": [
+        "BLE"
+      ],
+      "match": {
+        "kind": "name",
+        "value": "pigvision",
+        "mode": "exact"
+      },
+      "research": false,
+      "custom": false,
+      "explanation": "The Bluetooth name matches a published Flock naming pattern. Device names can be changed or imitated.",
+      "source": "https://codehedge.github.io/Biscuit-Wiki/3rd-party-integration/wardrive.html",
+      "sourceLabel": "Biscuit Wiki"
+    },
+    {
+      "id": "flock-name-3",
+      "category": "flock",
+      "protocols": [
+        "BLE"
+      ],
+      "match": {
+        "kind": "name",
+        "value": "FS Ext Battery",
+        "mode": "exact"
+      },
+      "research": false,
+      "custom": false,
+      "explanation": "The Bluetooth name matches a published Flock naming pattern. Device names can be changed or imitated.",
+      "source": "https://codehedge.github.io/Biscuit-Wiki/3rd-party-integration/wardrive.html",
+      "sourceLabel": "Biscuit Wiki"
+    },
+    {
+      "id": "axon-oui",
+      "category": "axon",
+      "protocols": [
+        "BLE"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "0025DF",
+        "allowLocal": false
+      },
+      "research": false,
+      "custom": false,
+      "explanation": "Published Axon/TASER vendor prefix. It does not establish a body camera or its owner.",
+      "source": "https://github.com/colonelpanichacks/oui-spy-unified-blue",
+      "sourceLabel": "OUI SPY detector research"
+    },
+    {
+      "id": "axon-company",
+      "category": "axon",
+      "protocols": [
+        "BLE"
+      ],
+      "match": {
+        "kind": "manufacturer",
+        "value": "034D"
+      },
+      "research": false,
+      "custom": false,
+      "explanation": "The exported Bluetooth manufacturer ID matches TASER International. No service UUID or payload verification is possible from this CSV.",
+      "source": "https://github.com/colonelpanichacks/oui-spy-unified-blue",
+      "sourceLabel": "OUI SPY detector research"
+    },
+    {
+      "id": "meta-name-0",
+      "category": "meta",
+      "protocols": [
+        "BLE"
+      ],
+      "match": {
+        "kind": "name",
+        "value": "Ray-Ban",
+        "mode": "contains"
+      },
+      "research": false,
+      "custom": false,
+      "explanation": "The Bluetooth name matches a published smart-glasses naming pattern. The stronger manufacturer-plus-service signature is unavailable in this CSV.",
+      "source": "https://github.com/colonelpanichacks/oui-spy-unified-blue",
+      "sourceLabel": "OUI SPY detector research"
+    },
+    {
+      "id": "meta-name-1",
+      "category": "meta",
+      "protocols": [
+        "BLE"
+      ],
+      "match": {
+        "kind": "name",
+        "value": "Wayfarer",
+        "mode": "contains"
+      },
+      "research": false,
+      "custom": false,
+      "explanation": "The Bluetooth name matches a published smart-glasses naming pattern. The stronger manufacturer-plus-service signature is unavailable in this CSV.",
+      "source": "https://github.com/colonelpanichacks/oui-spy-unified-blue",
+      "sourceLabel": "OUI SPY detector research"
+    },
+    {
+      "id": "meta-name-2",
+      "category": "meta",
+      "protocols": [
+        "BLE"
+      ],
+      "match": {
+        "kind": "name",
+        "value": "Oakley Meta",
+        "mode": "contains"
+      },
+      "research": false,
+      "custom": false,
+      "explanation": "The Bluetooth name matches a published smart-glasses naming pattern. The stronger manufacturer-plus-service signature is unavailable in this CSV.",
+      "source": "https://github.com/colonelpanichacks/oui-spy-unified-blue",
+      "sourceLabel": "OUI SPY detector research"
+    },
+    {
+      "id": "flock-serial",
+      "category": "flock",
+      "protocols": [
+        "BLE"
+      ],
+      "match": {
+        "kind": "serial"
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "A ten-digit Bluetooth name resembles a serial number. Many unrelated devices can use this pattern; this is only a research lead.",
+      "source": "https://codehedge.github.io/Biscuit-Wiki/3rd-party-integration/wardrive.html",
+      "sourceLabel": "Biscuit Wiki"
+    },
+    {
+      "id": "flock-research-70C94E",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "70C94E",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-3C9180",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "3C9180",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-D8F3BC",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "D8F3BC",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-803049",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "803049",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-B83532",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "B83532",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-145AFC",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "145AFC",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-744CA1",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "744CA1",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-083A88",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "083A88",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-9C2F9D",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "9C2F9D",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-C03532",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "C03532",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-940853",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "940853",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-E4AAEA",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "E4AAEA",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-F46ADD",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "F46ADD",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-E00AF6",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "E00AF6",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-24B2B9",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "24B2B9",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-00F48D",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "00F48D",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-D03957",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "D03957",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-E8D0FC",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "E8D0FC",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-E04F43",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "E04F43",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-B81EA4",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "B81EA4",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-700894",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "700894",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-588E81",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "588E81",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-EC1BBD",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "EC1BBD",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-3C71BF",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "3C71BF",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-5800E3",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "5800E3",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-9035EA",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "9035EA",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-5C93A2",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "5C93A2",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-646E69",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "646E69",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-4827EA",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "4827EA",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-A4CF12",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "A4CF12",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-14B5CD",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "14B5CD",
+        "allowLocal": false
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Community-reported Wi-Fi hardware prefix. Shared consumer chipsets can match; CSV does not retain the probe behavior needed to strengthen this lead.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    },
+    {
+      "id": "flock-research-826BF2",
+      "category": "flock",
+      "protocols": [
+        "Wi-Fi"
+      ],
+      "match": {
+        "kind": "prefix",
+        "value": "826BF2",
+        "allowLocal": true
+      },
+      "research": true,
+      "custom": false,
+      "explanation": "Experimental, locally administered address prefix reported by DeFlockJoplin. This is not an IEEE vendor allocation and may collide with unrelated devices.",
+      "source": "https://github.com/colonelpanichacks/flock-you/blob/main/datasets/NitekryDPaul_wifi_ouis.md",
+      "sourceLabel": "NitekryDPaul / DeFlockJoplin research · July 2026 snapshot"
+    }
+  ]
+}

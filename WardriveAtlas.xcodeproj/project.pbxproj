@@ -1,0 +1,814 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		173D49488A05D9841CCBE851 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CA807F18C384A25DAE48797 /* MapView.swift */; };
+		175E91660EE987FAA84DF204 /* MapPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C4A79C5247BFE37DD92EA29 /* MapPresentation.swift */; };
+		18829B016C2EBE9FF1419BA7 /* DisplayAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D98230E614177D4F1966F7 /* DisplayAnnotation.swift */; };
+		1D2961260420F0B27B8ABBB2 /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478860A54A267AF469D0519F /* AppCoordinator.swift */; };
+		36C159B28C5074A10E3EAAA6 /* WardriveAtlasCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DCE5B695CA300FAA7BA0ED29 /* WardriveAtlasCore.framework */; };
+		4FCDE5AB72F2C239CC38DFC3 /* WardriveAtlasApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 529076634D47E371ABCDC85F /* WardriveAtlasApp.swift */; };
+		5523122D0B861DF678D8D7E2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD3FE8FEE29D3C48EE95A7F /* SettingsView.swift */; };
+		58B545D71C9B2CB1699AF35A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AD6B4D13252818A55B3248DF /* Assets.xcassets */; };
+		5D2F84692D571ED852DFEC0F /* WardriveAtlasCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DCE5B695CA300FAA7BA0ED29 /* WardriveAtlasCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		829981512B72B202C26A3810 /* WardriveAtlasCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DCE5B695CA300FAA7BA0ED29 /* WardriveAtlasCore.framework */; };
+		898ED6EF76C7316856039FD3 /* BenchmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A39A106BB039141041627DD /* BenchmarkTests.swift */; };
+		9AC99D9E9C8D9E9B265C5DC3 /* WardriveAtlasCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DCE5B695CA300FAA7BA0ED29 /* WardriveAtlasCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		9ADC24422B17CCE05F360A3B /* WardriveAtlasUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13AF56D152A1069273038AAD /* WardriveAtlasUITests.swift */; };
+		9B2C94250E64B4E5C990AB30 /* OfflineMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B62ACAA9FD08251B197ACB02 /* OfflineMapView.swift */; };
+		9E3C0AC4E2B663647AE75C2E /* Movement.swift in Sources */ = {isa = PBXBuildFile; fileRef = D251DDBE13579CDB6111B25A /* Movement.swift */; };
+		B1C908E38DDC1293D8DC610E /* notable-morning.csv in Resources */ = {isa = PBXBuildFile; fileRef = C5563DE4061038AB884BB2FF /* notable-morning.csv */; };
+		B3CE82EBE303A4E629777A77 /* SettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CBBC322EE7F8B4AE63BC59 /* SettingsTests.swift */; };
+		B650A328C689FCC0BE68FF64 /* CSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82846DF74D032077121898C5 /* CSVImporter.swift */; };
+		B661033D239132F08C4E25A2 /* catalog.json in Resources */ = {isa = PBXBuildFile; fileRef = 82B6E47AD9460770338D4676 /* catalog.json */; };
+		BC73F0CDED8B8BDA7AC53FDC /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0878EABFE6074CD6DBFAC51C /* Models.swift */; };
+		BCDAC42283206B92DD828A24 /* Notable.swift in Sources */ = {isa = PBXBuildFile; fileRef = A259075C2142D1E12606C824 /* Notable.swift */; };
+		BE89CC0CD1A0547E1C4FB8CE /* legacy-reference.json in Resources */ = {isa = PBXBuildFile; fileRef = CABD3183058BAC1781D5132B /* legacy-reference.json */; };
+		BEE21AA8E952D9800D44AF69 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6648FAD3DB03126F6476A9CE /* SettingsStore.swift */; };
+		CF70AA91BC469907178D0A40 /* notable-evening.csv in Resources */ = {isa = PBXBuildFile; fileRef = FE688A81BDC77A114B2753EB /* notable-evening.csv */; };
+		EB1B84D8498F0D3442D157D9 /* Resources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E004F4AC79B3C7D6B84C238 /* Resources.swift */; };
+		F64697F74503258708A5FECC /* CoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996892605C630243A6346B0F /* CoreTests.swift */; };
+		F6F94DF14CC06F3B95F52364 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EF4A9E903767FAF2111E2E7 /* RootView.swift */; };
+		FC5D7814D461F4B88E59F705 /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79CE42EF95FEA5D94FDD1C78 /* InspectorView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		222149CE3B0DEC0E4BA8E145 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BC1DF4F5FC11DAFACEB5B9D0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4C521F8C6C55C19D0F05B1;
+			remoteInfo = WardriveAtlasCore;
+		};
+		4684ADA868F005ACEAF1BB90 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BC1DF4F5FC11DAFACEB5B9D0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DD0B8BD812F432532384F073;
+			remoteInfo = WardriveAtlas;
+		};
+		D62AD43CDFCB69FAD1E712B2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BC1DF4F5FC11DAFACEB5B9D0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4C521F8C6C55C19D0F05B1;
+			remoteInfo = WardriveAtlasCore;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		BDE99FF772FECC8FED1DD8DF /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				5D2F84692D571ED852DFEC0F /* WardriveAtlasCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C471D497F9537A0C3D7FFE22 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				9AC99D9E9C8D9E9B265C5DC3 /* WardriveAtlasCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0878EABFE6074CD6DBFAC51C /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		0EF4A9E903767FAF2111E2E7 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		13AF56D152A1069273038AAD /* WardriveAtlasUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardriveAtlasUITests.swift; sourceTree = "<group>"; };
+		1C0E397CA5A2E08529C84543 /* WardriveAtlasCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WardriveAtlasCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2C4A79C5247BFE37DD92EA29 /* MapPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPresentation.swift; sourceTree = "<group>"; };
+		3E004F4AC79B3C7D6B84C238 /* Resources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Resources.swift; sourceTree = "<group>"; };
+		478860A54A267AF469D0519F /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
+		47D98230E614177D4F1966F7 /* DisplayAnnotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayAnnotation.swift; sourceTree = "<group>"; };
+		529076634D47E371ABCDC85F /* WardriveAtlasApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardriveAtlasApp.swift; sourceTree = "<group>"; };
+		6648FAD3DB03126F6476A9CE /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		6CA807F18C384A25DAE48797 /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
+		79CE42EF95FEA5D94FDD1C78 /* InspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorView.swift; sourceTree = "<group>"; };
+		82846DF74D032077121898C5 /* CSVImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImporter.swift; sourceTree = "<group>"; };
+		82B6E47AD9460770338D4676 /* catalog.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = catalog.json; sourceTree = "<group>"; };
+		8A39A106BB039141041627DD /* BenchmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BenchmarkTests.swift; sourceTree = "<group>"; };
+		996892605C630243A6346B0F /* CoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTests.swift; sourceTree = "<group>"; };
+		A259075C2142D1E12606C824 /* Notable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notable.swift; sourceTree = "<group>"; };
+		A6DE548C69BA2C7F1A08EA0D /* WardriveAtlasUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WardriveAtlasUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD6B4D13252818A55B3248DF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B62ACAA9FD08251B197ACB02 /* OfflineMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapView.swift; sourceTree = "<group>"; };
+		C5563DE4061038AB884BB2FF /* notable-morning.csv */ = {isa = PBXFileReference; path = "notable-morning.csv"; sourceTree = "<group>"; };
+		CABD3183058BAC1781D5132B /* legacy-reference.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "legacy-reference.json"; sourceTree = "<group>"; };
+		D251DDBE13579CDB6111B25A /* Movement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Movement.swift; sourceTree = "<group>"; };
+		DCE5B695CA300FAA7BA0ED29 /* WardriveAtlasCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = WardriveAtlasCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		DEEFEDE5393D97F8E74F5B56 /* WardriveAtlas.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WardriveAtlas.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E9CBBC322EE7F8B4AE63BC59 /* SettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsTests.swift; sourceTree = "<group>"; };
+		EBD3FE8FEE29D3C48EE95A7F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		FE688A81BDC77A114B2753EB /* notable-evening.csv */ = {isa = PBXFileReference; path = "notable-evening.csv"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4BF8BC752AC481BE18898441 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				829981512B72B202C26A3810 /* WardriveAtlasCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EF2905965A596AF1E7F9B727 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				36C159B28C5074A10E3EAAA6 /* WardriveAtlasCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		28F074FC3EDE98F3E304B15D /* WardriveAtlasCore */ = {
+			isa = PBXGroup;
+			children = (
+				82846DF74D032077121898C5 /* CSVImporter.swift */,
+				2C4A79C5247BFE37DD92EA29 /* MapPresentation.swift */,
+				0878EABFE6074CD6DBFAC51C /* Models.swift */,
+				D251DDBE13579CDB6111B25A /* Movement.swift */,
+				A259075C2142D1E12606C824 /* Notable.swift */,
+				3E004F4AC79B3C7D6B84C238 /* Resources.swift */,
+				6648FAD3DB03126F6476A9CE /* SettingsStore.swift */,
+				8DF76DD7A7A67412FDFC0FF9 /* Resources */,
+			);
+			path = WardriveAtlasCore;
+			sourceTree = "<group>";
+		};
+		3A330570B9BD978CD7FAB1C5 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				AD6B4D13252818A55B3248DF /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		4BBC399813682692C09A4087 /* WardriveAtlasCoreTests */ = {
+			isa = PBXGroup;
+			children = (
+				8A39A106BB039141041627DD /* BenchmarkTests.swift */,
+				996892605C630243A6346B0F /* CoreTests.swift */,
+				E9CBBC322EE7F8B4AE63BC59 /* SettingsTests.swift */,
+				818A2571C1A4C811D19FC914 /* Fixtures */,
+			);
+			path = WardriveAtlasCoreTests;
+			sourceTree = "<group>";
+		};
+		6A5F08B1F93DF0EFA981E063 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DEEFEDE5393D97F8E74F5B56 /* WardriveAtlas.app */,
+				DCE5B695CA300FAA7BA0ED29 /* WardriveAtlasCore.framework */,
+				1C0E397CA5A2E08529C84543 /* WardriveAtlasCoreTests.xctest */,
+				A6DE548C69BA2C7F1A08EA0D /* WardriveAtlasUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7E966E7CA1143F3148664BB1 = {
+			isa = PBXGroup;
+			children = (
+				C74D4CEE4797F5204DE80FA8 /* Sources */,
+				86C5116394D04072185D3B51 /* Tests */,
+				6A5F08B1F93DF0EFA981E063 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		818A2571C1A4C811D19FC914 /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				CABD3183058BAC1781D5132B /* legacy-reference.json */,
+				FE688A81BDC77A114B2753EB /* notable-evening.csv */,
+				C5563DE4061038AB884BB2FF /* notable-morning.csv */,
+			);
+			path = Fixtures;
+			sourceTree = "<group>";
+		};
+		86C5116394D04072185D3B51 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				4BBC399813682692C09A4087 /* WardriveAtlasCoreTests */,
+				C46E630AE3867B5B840C941B /* WardriveAtlasUITests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		8DF76DD7A7A67412FDFC0FF9 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				82B6E47AD9460770338D4676 /* catalog.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		C46E630AE3867B5B840C941B /* WardriveAtlasUITests */ = {
+			isa = PBXGroup;
+			children = (
+				13AF56D152A1069273038AAD /* WardriveAtlasUITests.swift */,
+			);
+			path = WardriveAtlasUITests;
+			sourceTree = "<group>";
+		};
+		C74D4CEE4797F5204DE80FA8 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				F8FA9519DAAFBE1D62E576C8 /* WardriveAtlasApp */,
+				28F074FC3EDE98F3E304B15D /* WardriveAtlasCore */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		F8FA9519DAAFBE1D62E576C8 /* WardriveAtlasApp */ = {
+			isa = PBXGroup;
+			children = (
+				478860A54A267AF469D0519F /* AppCoordinator.swift */,
+				47D98230E614177D4F1966F7 /* DisplayAnnotation.swift */,
+				79CE42EF95FEA5D94FDD1C78 /* InspectorView.swift */,
+				6CA807F18C384A25DAE48797 /* MapView.swift */,
+				B62ACAA9FD08251B197ACB02 /* OfflineMapView.swift */,
+				0EF4A9E903767FAF2111E2E7 /* RootView.swift */,
+				EBD3FE8FEE29D3C48EE95A7F /* SettingsView.swift */,
+				529076634D47E371ABCDC85F /* WardriveAtlasApp.swift */,
+				3A330570B9BD978CD7FAB1C5 /* Resources */,
+			);
+			path = WardriveAtlasApp;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AF4C521F8C6C55C19D0F05B1 /* WardriveAtlasCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 85D18968407EB6E2379F31B2 /* Build configuration list for PBXNativeTarget "WardriveAtlasCore" */;
+			buildPhases = (
+				7ED1A739172172F7EA6BF448 /* Sources */,
+				626E1E06E78D59E378713ADB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WardriveAtlasCore;
+			packageProductDependencies = (
+			);
+			productName = WardriveAtlasCore;
+			productReference = DCE5B695CA300FAA7BA0ED29 /* WardriveAtlasCore.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		BBC9CE894E77D5CAA2BA4D7C /* WardriveAtlasUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 91CD168458E85FF560D18F01 /* Build configuration list for PBXNativeTarget "WardriveAtlasUITests" */;
+			buildPhases = (
+				3C92B4288D988AB53C863749 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				01BD610BA9B1277BFFA52B39 /* PBXTargetDependency */,
+			);
+			name = WardriveAtlasUITests;
+			packageProductDependencies = (
+			);
+			productName = WardriveAtlasUITests;
+			productReference = A6DE548C69BA2C7F1A08EA0D /* WardriveAtlasUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		DD0B8BD812F432532384F073 /* WardriveAtlas */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 51396B9BCFC4A93152AC3E99 /* Build configuration list for PBXNativeTarget "WardriveAtlas" */;
+			buildPhases = (
+				0F74F52912EDE56C47CA7780 /* Sources */,
+				DC9C2DF273D706A67BD19823 /* Resources */,
+				EF2905965A596AF1E7F9B727 /* Frameworks */,
+				BDE99FF772FECC8FED1DD8DF /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A218BF10224CEC60B23CC80C /* PBXTargetDependency */,
+			);
+			name = WardriveAtlas;
+			packageProductDependencies = (
+			);
+			productName = WardriveAtlas;
+			productReference = DEEFEDE5393D97F8E74F5B56 /* WardriveAtlas.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E7E1DC49EBFA5FD06183F293 /* WardriveAtlasCoreTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 10C5F9B7953C67D092FD45A5 /* Build configuration list for PBXNativeTarget "WardriveAtlasCoreTests" */;
+			buildPhases = (
+				548A8D3D084FA54F4B59E80F /* Sources */,
+				07A420A44B5D9648B746094E /* Resources */,
+				4BF8BC752AC481BE18898441 /* Frameworks */,
+				C471D497F9537A0C3D7FFE22 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				50282D6174C9579405CDEDF3 /* PBXTargetDependency */,
+			);
+			name = WardriveAtlasCoreTests;
+			packageProductDependencies = (
+			);
+			productName = WardriveAtlasCoreTests;
+			productReference = 1C0E397CA5A2E08529C84543 /* WardriveAtlasCoreTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BC1DF4F5FC11DAFACEB5B9D0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					AF4C521F8C6C55C19D0F05B1 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					BBC9CE894E77D5CAA2BA4D7C = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+						TestTargetID = DD0B8BD812F432532384F073;
+					};
+					DD0B8BD812F432532384F073 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					E7E1DC49EBFA5FD06183F293 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 26464C19A5CC60709D3ADD90 /* Build configuration list for PBXProject "WardriveAtlas" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7E966E7CA1143F3148664BB1;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 6A5F08B1F93DF0EFA981E063 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AF4C521F8C6C55C19D0F05B1 /* WardriveAtlasCore */,
+				DD0B8BD812F432532384F073 /* WardriveAtlas */,
+				E7E1DC49EBFA5FD06183F293 /* WardriveAtlasCoreTests */,
+				BBC9CE894E77D5CAA2BA4D7C /* WardriveAtlasUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		07A420A44B5D9648B746094E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BE89CC0CD1A0547E1C4FB8CE /* legacy-reference.json in Resources */,
+				CF70AA91BC469907178D0A40 /* notable-evening.csv in Resources */,
+				B1C908E38DDC1293D8DC610E /* notable-morning.csv in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		626E1E06E78D59E378713ADB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B661033D239132F08C4E25A2 /* catalog.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DC9C2DF273D706A67BD19823 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				58B545D71C9B2CB1699AF35A /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0F74F52912EDE56C47CA7780 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1D2961260420F0B27B8ABBB2 /* AppCoordinator.swift in Sources */,
+				18829B016C2EBE9FF1419BA7 /* DisplayAnnotation.swift in Sources */,
+				FC5D7814D461F4B88E59F705 /* InspectorView.swift in Sources */,
+				173D49488A05D9841CCBE851 /* MapView.swift in Sources */,
+				9B2C94250E64B4E5C990AB30 /* OfflineMapView.swift in Sources */,
+				F6F94DF14CC06F3B95F52364 /* RootView.swift in Sources */,
+				5523122D0B861DF678D8D7E2 /* SettingsView.swift in Sources */,
+				4FCDE5AB72F2C239CC38DFC3 /* WardriveAtlasApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3C92B4288D988AB53C863749 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9ADC24422B17CCE05F360A3B /* WardriveAtlasUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		548A8D3D084FA54F4B59E80F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				898ED6EF76C7316856039FD3 /* BenchmarkTests.swift in Sources */,
+				F64697F74503258708A5FECC /* CoreTests.swift in Sources */,
+				B3CE82EBE303A4E629777A77 /* SettingsTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7ED1A739172172F7EA6BF448 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B650A328C689FCC0BE68FF64 /* CSVImporter.swift in Sources */,
+				175E91660EE987FAA84DF204 /* MapPresentation.swift in Sources */,
+				BC73F0CDED8B8BDA7AC53FDC /* Models.swift in Sources */,
+				9E3C0AC4E2B663647AE75C2E /* Movement.swift in Sources */,
+				BCDAC42283206B92DD828A24 /* Notable.swift in Sources */,
+				EB1B84D8498F0D3442D157D9 /* Resources.swift in Sources */,
+				BEE21AA8E952D9800D44AF69 /* SettingsStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		01BD610BA9B1277BFFA52B39 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DD0B8BD812F432532384F073 /* WardriveAtlas */;
+			targetProxy = 4684ADA868F005ACEAF1BB90 /* PBXContainerItemProxy */;
+		};
+		50282D6174C9579405CDEDF3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4C521F8C6C55C19D0F05B1 /* WardriveAtlasCore */;
+			targetProxy = 222149CE3B0DEC0E4BA8E145 /* PBXContainerItemProxy */;
+		};
+		A218BF10224CEC60B23CC80C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4C521F8C6C55C19D0F05B1 /* WardriveAtlasCore */;
+			targetProxy = D62AD43CDFCB69FAD1E712B2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		024A9C21E574D1D217CEC889 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AtlasAppIcon;
+				CODE_SIGN_ENTITLEMENTS = Configuration/WardriveAtlas.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "Configuration/WardriveAtlas-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.deepgrant.WardriveAtlas;
+				PRODUCT_NAME = WardriveAtlas;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		2D62AE566427889FA371B117 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.deepgrant.WardriveAtlasUITests;
+				SDKROOT = macosx;
+				TEST_TARGET_NAME = WardriveAtlas;
+			};
+			name = Release;
+		};
+		3035BC55ED20A742A6A9E540 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.deepgrant.WardriveAtlasCoreTests;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		33B5389C26150C7BE47CC4E0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.deepgrant.WardriveAtlasUITests;
+				SDKROOT = macosx;
+				TEST_TARGET_NAME = WardriveAtlas;
+			};
+			name = Debug;
+		};
+		354FA80BA5103F1184C5227D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		66C509A5800C1C6F3E2F06BD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.deepgrant.WardriveAtlasCore;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		81C011DAD8C30F31C2D8155F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.deepgrant.WardriveAtlasCoreTests;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		84351C39EFBBC1D9FE89F500 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.deepgrant.WardriveAtlasCore;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		887B67CC95A544C4FF38E6DF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B2DA5467E31A40AD5E961097 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AtlasAppIcon;
+				CODE_SIGN_ENTITLEMENTS = Configuration/WardriveAtlas.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "Configuration/WardriveAtlas-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.deepgrant.WardriveAtlas;
+				PRODUCT_NAME = WardriveAtlas;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		10C5F9B7953C67D092FD45A5 /* Build configuration list for PBXNativeTarget "WardriveAtlasCoreTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3035BC55ED20A742A6A9E540 /* Debug */,
+				81C011DAD8C30F31C2D8155F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		26464C19A5CC60709D3ADD90 /* Build configuration list for PBXProject "WardriveAtlas" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				887B67CC95A544C4FF38E6DF /* Debug */,
+				354FA80BA5103F1184C5227D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		51396B9BCFC4A93152AC3E99 /* Build configuration list for PBXNativeTarget "WardriveAtlas" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				024A9C21E574D1D217CEC889 /* Debug */,
+				B2DA5467E31A40AD5E961097 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		85D18968407EB6E2379F31B2 /* Build configuration list for PBXNativeTarget "WardriveAtlasCore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				66C509A5800C1C6F3E2F06BD /* Debug */,
+				84351C39EFBBC1D9FE89F500 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		91CD168458E85FF560D18F01 /* Build configuration list for PBXNativeTarget "WardriveAtlasUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				33B5389C26150C7BE47CC4E0 /* Debug */,
+				2D62AE566427889FA371B117 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = BC1DF4F5FC11DAFACEB5B9D0 /* Project object */;
+}

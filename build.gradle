@@ -1,93 +1,315 @@
-import org.gradle.api.tasks.wrapper.Wrapper
+import groovy.io.FileType
 
 plugins {
   id 'base'
 }
 
-def npmExecutable = System.getProperty('os.name').toLowerCase().contains('windows') ? 'npm.cmd' : 'npm'
-def frontendInputs = files(
-  'index.html',
-  'map-styles',
-  'package.json',
-  'package-lock.json',
-  'src',
-  'styles.css',
-  'test',
-  'tsconfig.json',
-  'vite.config.ts',
+group = 'com.deepgrant'
+
+def gradleWrapperVersion = '9.7.1'
+def gradleDistributionChecksum = 'acd53f1edaf02f1a8ff99879f8a34b302661a057d9b063ae9e35b552f804d20a'
+
+def wardriveAtlasVersion = providers.gradleProperty('wardriveAtlasVersion').orElse(
+  providers.provider {
+    def matcher = file('project.yml').getText('UTF-8') =~ /(?m)^\s*MARKETING_VERSION:\s*(\S+)\s*$/
+    if (!matcher.find()) {
+      throw new GradleException('MARKETING_VERSION was not found in project.yml')
+    }
+    matcher.group(1)
+  }
 )
+def inferredBuildNumber = providers.exec {
+  commandLine 'git', 'rev-list', '--count', 'HEAD'
+  ignoreExitValue = true
+}.standardOutput.asText.map { it.trim() ?: '1' }
+def buildNumber = providers.environmentVariable('BUILD_NUMBER').orElse(inferredBuildNumber)
+def gitCommit = providers.exec {
+  commandLine 'git', 'rev-parse', 'HEAD'
+  ignoreExitValue = true
+}.standardOutput.asText.map { it.trim() ?: 'unknown' }
+def gitDirty = providers.exec {
+  commandLine 'git', 'status', '--porcelain'
+  ignoreExitValue = true
+}.standardOutput.asText.map { !it.trim().isEmpty() }
+def signingIdentity = providers.environmentVariable('DEVELOPER_ID_APPLICATION').orElse('-')
+def appleTeamID = providers.environmentVariable('APPLE_TEAM_ID').orElse('')
+def notarize = providers.environmentVariable('NOTARIZE').orElse('0')
+def xcodeJobs = providers.gradleProperty('xcodeJobs').map {
+  def value = Integer.parseInt(it)
+  if (value < 1) {
+    throw new GradleException('xcodeJobs must be at least 1')
+  }
+  value
+}.orElse(Math.max(1, Runtime.runtime.availableProcessors()))
 
-tasks.register('npmInstall', Exec) {
-  group = 'build setup'
-  description = 'Install the locked Node.js dependencies.'
-  inputs.files('package.json', 'package-lock.json')
-  outputs.dir('node_modules')
-  commandLine npmExecutable, 'ci'
+version = wardriveAtlasVersion.get()
+
+def xcodeRoot = layout.buildDirectory.dir('xcode')
+def derivedDataDir = xcodeRoot.map { it.dir('DerivedData') }
+def sourcePackagesDir = xcodeRoot.map { it.dir('SourcePackages') }
+def compiledApp = derivedDataDir.map { it.dir('Build/Products/Release/WardriveAtlas.app') }
+def appOutputDir = layout.buildDirectory.dir('app')
+def appBundle = appOutputDir.map { it.dir('WardriveAtlas.app') }
+def verificationMarker = layout.buildDirectory.file('verification/app-signature.txt')
+def distributionDir = layout.projectDirectory.dir('dist')
+def buildDmgScript = layout.projectDirectory.file('Scripts/build-dmg.sh')
+def verifyAppScript = layout.projectDirectory.file('Scripts/verify-app.sh')
+def xcodeProjectFile = layout.projectDirectory.file('WardriveAtlas.xcodeproj/project.pbxproj')
+def xcodeSchemeFile = layout.projectDirectory.file('WardriveAtlas.xcodeproj/xcshareddata/xcschemes/WardriveAtlas.xcscheme')
+def projectPathLayout = providers.provider {
+  def paths = []
+  [file('Sources'), file('Tests'), file('Configuration')].each { root ->
+    if (root.exists()) {
+      root.eachFileRecurse(FileType.ANY) { entry ->
+        paths << relativePath(entry) + (entry.isDirectory() ? '/' : '')
+      }
+    }
+  }
+  paths.sort()
 }
 
-tasks.register('lint', Exec) {
-  group = 'verification'
-  description = 'Run the strict TypeScript compiler checks.'
-  dependsOn tasks.named('npmInstall')
-  inputs.files(frontendInputs)
-  commandLine npmExecutable, 'run', 'lint'
+tasks.named('wrapper', Wrapper) {
+  gradleVersion = gradleWrapperVersion
+  distributionType = Wrapper.DistributionType.BIN
+  distributionSha256Sum = gradleDistributionChecksum
 }
 
-tasks.register('formatCheck', Exec) {
-  group = 'verification'
-  description = 'Verify that the TypeScript source follows the project formatting rules.'
-  dependsOn tasks.named('npmInstall')
-  inputs.files(frontendInputs)
-  commandLine npmExecutable, 'run', 'format:check'
-}
-
-tasks.register('test', Exec) {
-  group = 'verification'
-  description = 'Run the Wardrive Atlas test suite.'
-  dependsOn tasks.named('npmInstall')
-  inputs.files(frontendInputs)
-  commandLine npmExecutable, 'test'
-}
-
-tasks.register('appBuild', Exec) {
+def generateXcodeProject = tasks.register('generateXcodeProject', Exec) {
   group = 'build'
-  description = 'Create the production Wardrive Atlas application bundle.'
-  dependsOn tasks.named('npmInstall')
-  inputs.files(frontendInputs)
-  outputs.dir('dist')
-  commandLine npmExecutable, 'run', 'build'
+  description = 'Regenerate WardriveAtlas.xcodeproj when project configuration or file layout changes.'
+
+  workingDir layout.projectDirectory
+  commandLine 'xcodegen', 'generate'
+
+  inputs.file(layout.projectDirectory.file('project.yml'))
+    .withPathSensitivity(PathSensitivity.RELATIVE)
+  inputs.property 'projectPathLayout', projectPathLayout
+  outputs.files(xcodeProjectFile, xcodeSchemeFile)
+  outputs.cacheIf { false }
 }
 
-tasks.register('appRun', Exec) {
+// Apple frameworks only: keep pidex's task boundary without invoking package resolution.
+def resolveXcodePackages = tasks.register('resolveXcodePackages') {
+  group = 'build'
+  description = 'No external Swift packages to resolve.'
+  dependsOn generateXcodeProject
+}
+
+def compileReleaseApp = tasks.register('compileReleaseApp', Exec) {
+  group = 'build'
+  description = 'Incrementally compile and sign the Release WardriveAtlas.app product.'
+  dependsOn resolveXcodePackages
+
+  workingDir layout.projectDirectory
+
+  inputs.files(
+    xcodeProjectFile,
+    xcodeSchemeFile,
+    layout.projectDirectory.file('project.yml'),
+    layout.projectDirectory.file('Package.swift'),
+    layout.projectDirectory.file('Configuration/WardriveAtlas.entitlements')
+  ).withPathSensitivity(PathSensitivity.RELATIVE)
+  inputs.dir(layout.projectDirectory.dir('Configuration'))
+    .withPathSensitivity(PathSensitivity.RELATIVE)
+  inputs.dir(layout.projectDirectory.dir('Sources'))
+    .withPathSensitivity(PathSensitivity.RELATIVE)
+  inputs.property 'wardriveAtlasVersion', wardriveAtlasVersion
+  inputs.property 'buildNumber', buildNumber
+  inputs.property 'architecture', 'arm64'
+  inputs.property 'signingIdentity', signingIdentity
+  inputs.property 'appleTeamID', appleTeamID
+  outputs.dir compiledApp
+  outputs.cacheIf { false }
+
+  doFirst {
+    def identity = signingIdentity.get()
+    def teamID = appleTeamID.get()
+    if (identity != '-' && !teamID) {
+      throw new GradleException('Set APPLE_TEAM_ID when using a Developer ID identity')
+    }
+
+    def signingArguments = [
+      'CODE_SIGN_STYLE=Manual',
+      "CODE_SIGN_IDENTITY=${identity}"
+    ]
+    if (identity == '-') {
+      signingArguments.addAll([
+        'DEVELOPMENT_TEAM=',
+        'ENABLE_HARDENED_RUNTIME=NO'
+      ])
+    } else {
+      signingArguments.addAll([
+        "DEVELOPMENT_TEAM=${teamID}",
+        'ENABLE_HARDENED_RUNTIME=YES',
+        'OTHER_CODE_SIGN_FLAGS=--timestamp'
+      ])
+    }
+
+    commandLine([
+      'xcodebuild',
+      '-project', 'WardriveAtlas.xcodeproj',
+      '-scheme', 'WardriveAtlas',
+      '-skipPackagePluginValidation',
+      '-disableAutomaticPackageResolution',
+      '-onlyUsePackageVersionsFromResolvedFile',
+      '-configuration', 'Release',
+      '-destination', 'generic/platform=macOS',
+      '-derivedDataPath', derivedDataDir.get().asFile.absolutePath,
+      '-clonedSourcePackagesDirPath', sourcePackagesDir.get().asFile.absolutePath,
+      '-parallelizeTargets',
+      '-jobs', xcodeJobs.get().toString(),
+      '-showBuildTimingSummary',
+      "MARKETING_VERSION=${wardriveAtlasVersion.get()}",
+      "CURRENT_PROJECT_VERSION=${buildNumber.get()}",
+      'ARCHS=arm64',
+      'ONLY_ACTIVE_ARCH=NO',
+      'COMPILER_INDEX_STORE_ENABLE=NO'
+    ] + signingArguments + ['build'])
+  }
+}
+
+def stageApp = tasks.register('stageApp', Exec) {
+  group = 'build'
+  description = 'Stage the compiled application at build/app/WardriveAtlas.app.'
+  dependsOn compileReleaseApp
+
+  inputs.dir(compiledApp)
+    .withPathSensitivity(PathSensitivity.RELATIVE)
+  outputs.dir appBundle
+  outputs.cacheIf { false }
+
+  doFirst {
+    delete appBundle.get().asFile
+    appOutputDir.get().asFile.mkdirs()
+    commandLine(
+      '/usr/bin/ditto',
+      compiledApp.get().asFile.absolutePath,
+      appBundle.get().asFile.absolutePath
+    )
+  }
+}
+
+def verifyApp = tasks.register('verifyApp', Exec) {
+  group = 'verification'
+  description = 'Verify the staged application and embedded framework signatures.'
+  dependsOn stageApp
+
+  workingDir layout.projectDirectory
+  commandLine verifyAppScript.asFile.absolutePath, appBundle.get().asFile.absolutePath
+  environment 'DEVELOPER_ID_APPLICATION', signingIdentity.get()
+  environment 'APPLE_TEAM_ID', appleTeamID.get()
+
+  inputs.file(verifyAppScript)
+    .withPathSensitivity(PathSensitivity.RELATIVE)
+  inputs.dir(appBundle)
+    .withPathSensitivity(PathSensitivity.RELATIVE)
+  inputs.property 'signingIdentity', signingIdentity
+  inputs.property 'appleTeamID', appleTeamID
+  outputs.file verificationMarker
+  outputs.cacheIf { false }
+
+  doFirst {
+    delete verificationMarker.get().asFile
+  }
+  doLast {
+    def marker = verificationMarker.get().asFile
+    marker.parentFile.mkdirs()
+    marker.text = "verified=${new Date().format("yyyy-MM-dd'T'HH:mm:ssXXX")}\n"
+  }
+}
+
+tasks.register('buildApp') {
+  group = 'build'
+  description = 'Build the release WardriveAtlas.app bundle without creating a DMG.'
+  dependsOn verifyApp
+}
+
+tasks.named('build') {
+  description = 'Build WardriveAtlas.app without creating a DMG.'
+  dependsOn tasks.named('buildApp')
+}
+
+tasks.register('runApp', Exec) {
   group = 'application'
-  description = 'Run Wardrive Atlas locally with the Vite development server.'
-  dependsOn tasks.named('npmInstall')
-  standardInput = System.in
-  commandLine npmExecutable, 'start'
+  description = 'Build and launch WardriveAtlas without creating a DMG.'
+  dependsOn tasks.named('buildApp')
+
+  // LaunchServices activates the existing single-window survey application.
+  commandLine 'open', appBundle.get().asFile.absolutePath
 }
 
 tasks.register('run') {
   group = 'application'
-  description = 'Alias for appRun.'
-  dependsOn tasks.named('appRun')
+  description = 'Alias for runApp.'
+  dependsOn tasks.named('runApp')
+}
+
+tasks.register('test', Exec) {
+  group = 'verification'
+  description = 'Run the WardriveAtlas Swift test suite.'
+
+  workingDir layout.projectDirectory
+  commandLine 'swift', 'test', '--scratch-path', layout.buildDirectory.dir('swiftpm').get().asFile.absolutePath
+
+  inputs.file layout.projectDirectory.file('Package.swift')
+  inputs.dir layout.projectDirectory.dir('Sources')
+  inputs.dir layout.projectDirectory.dir('Tests')
+
+  // SwiftPM owns test incrementality and reporting.
+  outputs.upToDateWhen { false }
 }
 
 tasks.named('check') {
-  dependsOn tasks.named('formatCheck'), tasks.named('lint'), tasks.named('test')
+  dependsOn tasks.named('test')
 }
 
-tasks.named('assemble') {
-  dependsOn tasks.named('appBuild')
+tasks.register('dmg', Exec) {
+  group = 'distribution'
+  description = 'Package the current WardriveAtlas.app as an Apple Silicon DMG.'
+  dependsOn tasks.named('buildApp')
+
+  workingDir layout.projectDirectory
+  commandLine buildDmgScript.asFile.absolutePath, wardriveAtlasVersion.get()
+  environment 'OUTPUT_DIR', distributionDir.asFile.absolutePath
+  environment 'PREBUILT_APP', appBundle.get().asFile.absolutePath
+
+  inputs.file(buildDmgScript)
+    .withPathSensitivity(PathSensitivity.RELATIVE)
+  inputs.dir(appBundle)
+    .withPathSensitivity(PathSensitivity.RELATIVE)
+  inputs.property 'wardriveAtlasVersion', wardriveAtlasVersion
+  inputs.property 'buildNumber', buildNumber
+  inputs.property 'gitCommit', gitCommit
+  inputs.property 'gitDirty', gitDirty
+  inputs.property 'signingIdentity', signingIdentity
+  inputs.property 'appleTeamID', appleTeamID
+  inputs.property 'notarize', notarize
+  outputs.files(
+    distributionDir.file("WardriveAtlas-${wardriveAtlasVersion.get()}-arm64.dmg"),
+    distributionDir.file("WardriveAtlas-${wardriveAtlasVersion.get()}-arm64.dmg.sha256"),
+    distributionDir.file("WardriveAtlas-${wardriveAtlasVersion.get()}-arm64-release.json")
+  )
+  outputs.cacheIf { false }
+}
+
+tasks.register('packageDmg') {
+  group = 'distribution'
+  description = 'Alias for dmg.'
+  dependsOn tasks.named('dmg')
+}
+
+
+tasks.register('testUI', Exec) {
+  group = 'verification'
+  description = 'Run the native UI tests through Xcode.'
+  dependsOn generateXcodeProject
+  workingDir layout.projectDirectory
+  commandLine 'xcodebuild', '-project', 'WardriveAtlas.xcodeproj', '-scheme', 'WardriveAtlas',
+    '-destination', 'platform=macOS,arch=arm64', '-derivedDataPath', derivedDataDir.get().asFile.absolutePath,
+    "-only-testing:${providers.gradleProperty('uiTest').orElse('WardriveAtlasUITests').get()}", 'CODE_SIGN_IDENTITY=-', 'DEVELOPMENT_TEAM=',
+    'ENABLE_HARDENED_RUNTIME=NO', "ATLAS_UI_BENCHMARK=${providers.environmentVariable('ATLAS_UI_BENCHMARK').orElse('0').get()}", 'test'
 }
 
 tasks.named('clean') {
-  delete layout.projectDirectory.dir('dist')
-}
-
-tasks.named('wrapper', Wrapper) {
-  gradleVersion = '9.7.1'
-  distributionType = Wrapper.DistributionType.BIN
-  distributionSha256Sum = 'acd53f1edaf02f1a8ff99879f8a34b302661a057d9b063ae9e35b552f804d20a'
-  networkTimeout = 10000
-  validateDistributionUrl = true
+  delete layout.projectDirectory.dir('.build'), distributionDir
 }
