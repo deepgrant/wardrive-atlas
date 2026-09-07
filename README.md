@@ -2,6 +2,8 @@
 
 Wardrive Atlas is a native SwiftUI + MapKit application for exploring Biscuit/WiGLE Wi-Fi and Bluetooth survey captures privately on an Apple silicon Mac. Capture files are processed on the Mac and are never uploaded.
 
+![Wardrive Atlas showing survey observations on Apple Maps, capture filters, co-travel candidates, and the evidence inspector](Documentation/images/wardrive-atlas-co-travel.png)
+
 ## Requirements
 
 - macOS 26 or later on Apple silicon.
