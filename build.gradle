@@ -261,6 +261,7 @@ tasks.register('test', Exec) {
 
 tasks.named('check') {
   dependsOn tasks.named('test')
+  dependsOn 'testApp'
 }
 
 tasks.register('dmg', Exec) {
@@ -298,6 +299,19 @@ tasks.register('packageDmg') {
   dependsOn tasks.named('dmg')
 }
 
+
+tasks.register('testApp', Exec) {
+  group = 'verification'
+  description = 'Run hosted app unit tests with isolated settings and offline startup.'
+  dependsOn generateXcodeProject
+  workingDir layout.projectDirectory
+  commandLine 'xcodebuild', '-project', 'WardriveAtlas.xcodeproj', '-scheme', 'WardriveAtlas',
+    '-configuration', providers.gradleProperty('appTestConfiguration').orElse('Debug').get(),
+    '-destination', 'platform=macOS,arch=arm64', '-derivedDataPath', derivedDataDir.get().asFile.absolutePath,
+    "-only-testing:${providers.gradleProperty('appTest').orElse('WardriveAtlasAppTests').get()}",
+    'CODE_SIGN_IDENTITY=-', 'DEVELOPMENT_TEAM=', 'ENABLE_HARDENED_RUNTIME=NO', 'ENABLE_TESTABILITY=YES', 'ATLAS_APP_TESTS=1',
+    "ATLAS_TRUST_BENCHMARK=${providers.environmentVariable('ATLAS_TRUST_BENCHMARK').orElse('0').get()}", 'test'
+}
 
 tasks.register('testUI', Exec) {
   group = 'verification'

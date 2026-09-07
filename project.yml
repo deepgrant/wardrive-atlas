@@ -64,6 +64,20 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.deepgrant.WardriveAtlasCoreTests
         GENERATE_INFOPLIST_FILE: true
+  WardriveAtlasAppTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/WardriveAtlasAppTests
+    dependencies:
+      - target: WardriveAtlas
+      - target: WardriveAtlasCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.deepgrant.WardriveAtlasAppTests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/WardriveAtlas.app/Contents/MacOS/WardriveAtlas
+        BUNDLE_LOADER: $(TEST_HOST)
   WardriveAtlasUITests:
     type: bundle.ui-testing
     platform: macOS
@@ -85,8 +99,11 @@ schemes:
       gatherCoverageData: true
       environmentVariables:
         ATLAS_UI_BENCHMARK: $(ATLAS_UI_BENCHMARK)
+        ATLAS_APP_TESTS: "1"
+        ATLAS_TRUST_BENCHMARK: $(ATLAS_TRUST_BENCHMARK)
       targets:
         - WardriveAtlasCoreTests
+        - WardriveAtlasAppTests
         - WardriveAtlasUITests
     run:
       config: Debug

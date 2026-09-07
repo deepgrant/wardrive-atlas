@@ -3,61 +3,62 @@ import SwiftUI
 import UniformTypeIdentifiers
 import WardriveAtlasCore
 
-struct AnalysisOutput: Sendable {
-  var filtered: [Observation]
-  var candidates: [Candidate]
-  var movement: MovementResult
-}
-enum Selection: Equatable {
-  case observation(String)
-  case candidate(String)
-  case movement(String)
-  case trusted(TrustedDevice)
-}
-
 @MainActor
 final class AppCoordinator: ObservableObject {
   @Published var records: [Observation] = []
   @Published var filtered: [Observation] = []
   @Published var candidates: [Candidate] = []
-  @Published var movement = MovementResult()
-  @Published var settings = SettingsSnapshot()
+  @Published var movement = MovementResult() {
+    didSet { presentIdentities = Set(movement.assessments.compactMap(\.identity)) }
+  }
+  @Published var settings = SettingsSnapshot() {
+    didSet {
+      if settings.savedTrust != oldValue.savedTrust
+        || settings.trustOverrides != oldValue.trustOverrides
+      {
+        trustedIdentities = settings.effectiveTrust
+        trustedRows = trustedIdentities.union(settings.trustOverrides.keys).sorted { $0.id < $1.id }
+      }
+    }
+  }
+  private(set) var trustedIdentities: Set<TrustedDevice> = []
+  private(set) var trustedRows: [TrustedDevice] = []
+  private var presentIdentities: Set<TrustedDevice> = []
   @Published var filter = ObservationFilter() { didSet { analyze() } }
   @Published var sensitivity: Sensitivity = .medium { didSet { analyze() } }
   @Published var research = false { didSet { analyze() } }
   @Published var dismissed: Set<String> = []
-  @Published var selection: Selection? { didSet { refreshMap() } }
+  @Published var selection: Selection? { didSet { if selection != oldValue { refreshMap() } } }
   @Published var category: DetectionCategory? {
     didSet {
-      reconcileSelection()
-      refreshMap()
+      if !reconcileSelection() { refreshMap() }
     }
   }
   @Published var candidateSort: CandidateSort = .evidence
   @Published var movementView: MovementView = .candidates {
     didSet {
-      reconcileSelection()
-      refreshMap()
+      if !reconcileSelection() { refreshMap() }
     }
   }
   @Published var analysisPanel = "Notable" {
     didSet {
-      selection = nil
-      refreshMap()
+      if selection == nil { refreshMap() } else { selection = nil }
     }
   }
   @Published var mapMode: MapMode = .points
   @Published var route = false { didSet { refreshMap() } }
   @Published var streetMap = true {
     didSet {
-      if started, ProcessInfo.processInfo.environment["ATLAS_SETTINGS_DIRECTORY"] == nil {
+      if started, !transientSettings {
         UserDefaults.standard.set(streetMap, forKey: "streetMap")
       }
     }
   }
   @Published var namePrivacy: PrivacyMode = .show
   @Published var addressPrivacy: PrivacyMode = .show
-  @Published var presentation = MapPresentation()
+  @Published private(set) var mapSnapshot = MapProjection()
+  var presentation: MapPresentation { mapSnapshot.presentation }
+  private var acceptedPresentationID: UUID?
   @Published var presentationRevision = 0
   @Published var fitRevision = 0
   @Published var importing = false
@@ -68,23 +69,47 @@ final class AppCoordinator: ObservableObject {
   @Published var mapStatus = "Apple Maps · observations stay on this Mac"
   private var catalog: RuleCatalog?
   private let store: SettingsStore
+  private let transientSettings: Bool
+  private let analyzeOperation: @Sendable (AnalysisInput) async throws -> AnalysisOutput
+  private let projectOperation: @Sendable (ProjectionInput) async throws -> MapProjection
+  private let debounce: Duration
+  private var analysisReady = false
   private var started = false
   private var pendingFit = false
   private var generation = 0, importGeneration = 0, mapGeneration = 0
-  private var analysisTask: Task<Void, Never>?
+  private(set) var analysisTask: Task<Void, Never>?
   private var analysisWork: Task<AnalysisOutput, Error>?
   private var importWork: Task<([Observation], [String]), Error>?
-  private var mapWork: Task<MapPresentation, Error>?
+  private var mapWork: Task<MapProjection, Error>?
+  private(set) var projectionTask: Task<Void, Never>?
   private var rowIndex: [String: Observation] = [:]
-  init() {
-    let args = ProcessInfo.processInfo.arguments
-    if let directory = ProcessInfo.processInfo.environment["ATLAS_SETTINGS_DIRECTORY"] {
-      store = SettingsStore(directory: URL(fileURLWithPath: directory))
+  init(
+    store: SettingsStore? = nil,
+    debounce: Duration = .milliseconds(120),
+    analyze: @escaping @Sendable (AnalysisInput) async throws -> AnalysisOutput = { try $0.run() },
+    project: @escaping @Sendable (ProjectionInput) async throws -> MapProjection = { try $0.run() }
+  ) {
+    self.debounce = debounce
+    analyzeOperation = analyze
+    projectOperation = project
+    let environment = ProcessInfo.processInfo.environment
+    let testing = environment["ATLAS_APP_TESTS"] == "1"
+    transientSettings = store != nil || testing || environment["ATLAS_SETTINGS_DIRECTORY"] != nil
+    if let store {
+      self.store = store
+    } else if let directory = environment["ATLAS_SETTINGS_DIRECTORY"], !directory.isEmpty {
+      self.store = SettingsStore(directory: URL(fileURLWithPath: directory))
+    } else if testing {
+      // Hosted unit tests never load or modify a user's saved identities.
+      self.store = SettingsStore(
+        directory: FileManager.default.temporaryDirectory
+          .appendingPathComponent("atlas-host-tests-\(UUID().uuidString)"))
     } else {
-      store = SettingsStore()
+      self.store = SettingsStore()
     }
     streetMap =
-      (args.contains("--offline") || ProcessInfo.processInfo.environment["ATLAS_OFFLINE"] == "1")
+      testing || ProcessInfo.processInfo.arguments.contains("--offline")
+        || environment["ATLAS_OFFLINE"] == "1"
       ? false : UserDefaults.standard.object(forKey: "streetMap") as? Bool ?? true
   }
   func start() async {
@@ -92,6 +117,8 @@ final class AppCoordinator: ObservableObject {
     started = true
     do { catalog = try RuleCatalog.load() } catch { self.error = error.localizedDescription }
     settings = await store.load()
+    if !records.isEmpty { analyze() }
+    if ProcessInfo.processInfo.environment["ATLAS_APP_TESTS"] == "1" { return }
     let args = ProcessInfo.processInfo.arguments
     if args.contains("--sample") { loadSample() }
     if let index = args.firstIndex(of: "--import"), args.indices.contains(index + 1) {
@@ -112,13 +139,12 @@ final class AppCoordinator: ObservableObject {
   var visibleMovement: [MovementAssessment] {
     movement.assessments.filter {
       $0.view(
-        trusted: $0.representative.identity.map { settings.effectiveTrust.contains($0) } ?? false)
+        trusted: $0.identity.map { trustedIdentities.contains($0) } ?? false)
         == movementView
     }
   }
   var absentTrusted: [TrustedDevice] {
-    let present = Set(movement.assessments.compactMap { $0.representative.identity })
-    return settings.effectiveTrust.subtracting(present).sorted { $0.id < $1.id }
+    trustedIdentities.subtracting(presentIdentities).sorted { $0.id < $1.id }
   }
   var selectedCandidate: Candidate? {
     if case .candidate(let key) = selection { return candidates.first { $0.key == key } }
@@ -141,7 +167,8 @@ final class AppCoordinator: ObservableObject {
   var selectedRecords: [Observation] {
     selectedCandidate?.records ?? selectedMovement?.records ?? selectedRecord.map { [$0] } ?? []
   }
-  func reconcileSelection() {
+  @discardableResult func reconcileSelection() -> Bool {
+    let previous = selection
     switch selection {
     case .candidate(let key):
       if !visibleCandidates.contains(where: { $0.key == key }) { selection = nil }
@@ -152,6 +179,7 @@ final class AppCoordinator: ObservableObject {
     case .observation(let id): if !filtered.contains(where: { $0.id == id }) { selection = nil }
     default: break
     }
+    return selection != previous
   }
   func openFiles() {
     let panel = NSOpenPanel()
@@ -244,7 +272,8 @@ final class AppCoordinator: ObservableObject {
   func clear() {
     cancelImport()
     generation += 1
-    mapGeneration += 1
+    analysisReady = false
+    invalidateMapSelection()
     analysisTask?.cancel()
     analysisWork?.cancel()
     mapWork?.cancel()
@@ -255,36 +284,35 @@ final class AppCoordinator: ObservableObject {
     movement = .init()
     dismissed = []
     selection = nil
-    presentation = .init()
+    mapSnapshot = .init()
     presentationRevision += 1
     filter = .init()
     analyzing = false
     status = "Captures cleared. Rules and trusted devices remain saved."
   }
+  private func invalidateMapSelection() {
+    acceptedPresentationID = nil
+    mapGeneration += 1
+    mapWork?.cancel()
+    projectionTask?.cancel()
+  }
   func analyze() {
+    invalidateMapSelection()
+    analysisReady = false
     guard started, let catalog else { return }
     generation += 1
     let ticket = generation
     analysisTask?.cancel()
     analysisWork?.cancel()
-    let rows = records
-    let filter = filter
-    let rules = settings.rules
-    let sensitivity = sensitivity
-    let research = research
-    let dismissed = dismissed
-    analyzing = !rows.isEmpty
+    let input = AnalysisInput(
+      records: records, filter: filter, catalog: catalog, rules: settings.rules,
+      sensitivity: sensitivity, research: research, dismissed: dismissed)
+    let operation = analyzeOperation
+    analyzing = !records.isEmpty
     analysisTask = Task {
-      do { try await Task.sleep(for: .milliseconds(120)) } catch { return }
+      do { try await Task.sleep(for: debounce) } catch { return }
       guard ticket == generation else { return }
-      let work = Task.detached(priority: .userInitiated) { () throws -> AnalysisOutput in
-        let filtered = try filter.apply(rows)
-        let candidates = try NotableAnalysis.analyze(
-          filtered, catalog: catalog, settings: rules, research: research, dismissed: dismissed)
-        let movement = try MovementAnalysis.analyze(
-          filtered, catalog: catalog, sensitivity: sensitivity, custom: rules.custom)
-        return AnalysisOutput(filtered: filtered, candidates: candidates, movement: movement)
-      }
+      let work = Task.detached(priority: .userInitiated) { try await operation(input) }
       analysisWork = work
       do {
         let output = try await work.value
@@ -293,54 +321,54 @@ final class AppCoordinator: ObservableObject {
         candidates = output.candidates
         movement = output.movement
         analyzing = false
-        reconcileSelection()
-        refreshMap()
-      } catch is CancellationError {} catch {
-        if ticket == generation {
-          analyzing = false
-          self.error = error.localizedDescription
-        }
+        analysisReady = true
+        analysisWork = nil
+        if !reconcileSelection() { refreshMap() }
+      } catch {
+        guard ticket == generation else { return }
+        analyzing = false
+        analysisWork = nil
+        if !(error is CancellationError) { self.error = error.localizedDescription }
       }
     }
   }
   func refreshMap() {
-    mapGeneration += 1
+    invalidateMapSelection()
+    guard analysisReady else { return }
     let ticket = mapGeneration
-    mapWork?.cancel()
-    let rows = filtered
-    let candidates = analysisPanel == "Notable" ? visibleCandidates : []
-    let assessments = analysisPanel == "Notable" ? [] : visibleMovement
-    let selected = Set(selectedRecords.map(\.id))
-    let selectedMovement = selectedMovement
-    let route = route
-    let work = Task.detached(priority: .userInitiated) {
-      try MapPresentation.make(
-        records: rows, candidates: candidates, movement: assessments, selectedIDs: selected,
-        selectedMovement: selectedMovement, route: route)
-    }
+    let input = ProjectionInput(
+      records: filtered,
+      candidates: analysisPanel == "Notable" ? visibleCandidates : [],
+      assessments: analysisPanel == "Notable" ? [] : visibleMovement,
+      selectedIDs: Set(selectedRecords.map(\.id)), selectedMovement: selectedMovement, route: route)
+    let operation = projectOperation
+    let work = Task.detached(priority: .userInitiated) { try await operation(input) }
     mapWork = work
-    Task {
+    projectionTask = Task {
       do {
         let result = try await work.value
         guard ticket == mapGeneration else { return }
-        presentation = result
+        mapSnapshot = result
+        acceptedPresentationID = result.presentation.id
         presentationRevision += 1
+        mapWork = nil
         if pendingFit {
           pendingFit = false
           fitRevision += 1
         }
-      } catch is CancellationError {} catch { self.error = error.localizedDescription }
+      } catch {
+        guard ticket == mapGeneration else { return }
+        mapWork = nil
+        if !(error is CancellationError) { self.error = error.localizedDescription }
+      }
     }
   }
-  func selectMap(_ id: String) {
-    let base = String(id.split(separator: "/")[0])
-    if let candidate = candidates.first(where: { $0.id == base }) {
-      selection = .candidate(candidate.key)
-    } else if let assessment = movement.assessments.first(where: { $0.id == base }) {
-      selection = .movement(assessment.representative.candidateKey)
-    } else {
-      selection = .observation(id)
-    }
+  func selectMap(_ token: MapSelectionToken) {
+    guard token.presentationID == acceptedPresentationID,
+      token.presentationID == mapSnapshot.presentation.id,
+      let target = mapSnapshot.selections[token.featureID]
+    else { return }
+    selection = target
   }
   func dismissCandidate() {
     if let candidate = selectedCandidate {
@@ -359,8 +387,7 @@ final class AppCoordinator: ObservableObject {
     Task {
       settings = await store.updateTrust(device, trusted: value)
       saving = false
-      reconcileSelection()
-      refreshMap()
+      if !reconcileSelection() { refreshMap() }
     }
   }
   func saveRules(_ value: RuleSettings, retry: Bool = false, reset: Bool = false) {

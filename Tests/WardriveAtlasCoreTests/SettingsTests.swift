@@ -169,3 +169,77 @@ struct SettingsTests {
     }
   }
 }
+
+extension SettingsTests {
+  @Test func independentWarningsSurviveUnrelatedSavesAndPartialRetries() async throws {
+    let url = directory()
+    defer { try? FileManager.default.removeItem(at: url) }
+    let control = WriteControl()
+    let store = SettingsStore(directory: url, writer: { try control.write($0, $1) })
+    let a = TrustedDevice(digest: sha256("warning-a"), type: .ble)
+    let b = TrustedDevice(digest: sha256("warning-b"), type: .ble)
+    var rules = RuleSettings()
+    rules.custom = [.init(prefix: "B41E52", category: .flock, protocol: .both)]
+    control.fail(true)
+    _ = await store.updateRules(rules)
+    control.fail(false)
+    let trusted = await store.updateTrust(a, trusted: true)
+    #expect(trusted.rulesPending)
+    #expect(!trusted.ruleWarnings.isEmpty)
+    #expect(trusted.trustWarnings.isEmpty)
+    control.fail(true)
+    _ = await store.updateTrust(a, trusted: false)
+    _ = await store.updateTrust(b, trusted: true)
+    control.fail(false)
+    let savedRules = await store.updateRules(rules, explicitRetry: true)
+    #expect(savedRules.ruleWarnings.isEmpty)
+    #expect(!savedRules.trustWarnings.isEmpty)
+    #expect(savedRules.savedTrust.devices.contains(a))
+    #expect(!savedRules.savedTrust.devices.contains(b))
+    let discarded = await store.discardPendingRules()
+    #expect(!discarded.trustWarnings.isEmpty)
+    let partial = await store.updateTrust(a, trusted: false)
+    #expect(!partial.trustWarnings.isEmpty)
+    #expect(partial.trustOverrides[b] == true)
+    let complete = await store.updateTrust(b, trusted: true)
+    #expect(complete.warnings.isEmpty)
+  }
+
+  @Test func corruptFileWarningsSurviveUnrelatedResetAndDiscard() async throws {
+    let url = directory()
+    defer { try? FileManager.default.removeItem(at: url) }
+    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+    let invalid = Data("invalid".utf8)
+    try invalid.write(to: url.appendingPathComponent("rules-v1.json"))
+    try invalid.write(to: url.appendingPathComponent("trust-v1.json"))
+    let store = SettingsStore(directory: url)
+    let loaded = await store.load()
+    #expect(loaded.warnings == loaded.ruleWarnings + loaded.trustWarnings)
+    #expect(loaded.ruleWarnings.count == 1 && loaded.trustWarnings.count == 1)
+    let discarded = await store.discardPendingRules()
+    #expect(discarded.ruleIssues.unreadableFile)
+    #expect(discarded.trustIssues.unreadableFile)
+    let reset = await store.updateRules(.init(), reset: true)
+    #expect(reset.ruleWarnings.isEmpty)
+    #expect(reset.trustIssues.unreadableFile)
+    #expect(try Data(contentsOf: url.appendingPathComponent("trust-v1.json")) == invalid)
+  }
+
+  @Test func trustCapacityWarningRequiresSpaceToBeFreed() async throws {
+    let url = directory()
+    defer { try? FileManager.default.removeItem(at: url) }
+    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+    var trust = TrustedSettings()
+    trust.devices = (0..<10_000).map { .init(digest: sha256("capacity-\($0)"), type: .ble) }
+    try JSONEncoder().encode(trust).write(to: url.appendingPathComponent("trust-v1.json"))
+    let store = SettingsStore(directory: url)
+    let failed = await store.updateTrust(.init(digest: sha256("extra"), type: .ble), trusted: true)
+    #expect(failed.trustIssues.capacityReached)
+    let rulesSaved = await store.updateRules(.init())
+    #expect(rulesSaved.trustIssues.capacityReached)
+    let existing = await store.updateTrust(trust.devices[0], trusted: true)
+    #expect(existing.trustIssues.capacityReached)
+    let removed = await store.updateTrust(trust.devices[0], trusted: false)
+    #expect(!removed.trustIssues.capacityReached)
+  }
+}

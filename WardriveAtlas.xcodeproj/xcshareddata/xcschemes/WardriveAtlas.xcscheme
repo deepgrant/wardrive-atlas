@@ -70,6 +70,17 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "E1636F02F7165D0FA9B0DCFB"
+               BuildableName = "WardriveAtlasAppTests.xctest"
+               BlueprintName = "WardriveAtlasAppTests"
+               ReferencedContainer = "container:WardriveAtlas.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "BBC9CE894E77D5CAA2BA4D7C"
                BuildableName = "WardriveAtlasUITests.xctest"
                BlueprintName = "WardriveAtlasUITests"
@@ -80,6 +91,16 @@
       <CommandLineArguments>
       </CommandLineArguments>
       <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "ATLAS_APP_TESTS"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "ATLAS_TRUST_BENCHMARK"
+            value = "$(ATLAS_TRUST_BENCHMARK)"
+            isEnabled = "YES">
+         </EnvironmentVariable>
          <EnvironmentVariable
             key = "ATLAS_UI_BENCHMARK"
             value = "$(ATLAS_UI_BENCHMARK)"

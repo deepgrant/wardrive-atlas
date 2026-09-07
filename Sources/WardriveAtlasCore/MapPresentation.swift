@@ -1,5 +1,14 @@
 import Foundation
 
+public struct MapSelectionToken: Hashable, Sendable {
+  public let presentationID: UUID
+  public let featureID: String
+  public init(presentationID: UUID, featureID: String) {
+    self.presentationID = presentationID
+    self.featureID = featureID
+  }
+}
+
 public struct MapPoint: Identifiable, Codable, Sendable {
   public var id: String
   public var latitude: Double
@@ -28,10 +37,17 @@ public struct MapPath: Sendable {
   public var movement: Bool
 }
 public struct MapPresentation: Sendable {
+  public let id = UUID()
   public var points: [MapPoint] = []
   public var pins: [MapPoint] = []
   public var paths: [MapPath] = []
   public init() {}
+  public func token(for featureID: String) -> MapSelectionToken {
+    MapSelectionToken(presentationID: id, featureID: featureID)
+  }
+  public static func pinID(_ resultID: String, index: Int) -> String {
+    "\(resultID)/\(index)"
+  }
   public static func make(
     records: [Observation], candidates: [Candidate], movement: [MovementAssessment],
     selectedIDs: Set<String>, selectedMovement: MovementAssessment?, route: Bool
@@ -52,7 +68,7 @@ public struct MapPresentation: Sendable {
       for (i, row) in candidate.representatives.enumerated() {
         result.pins.append(
           point(
-            row, id: "\(candidate.id)/\(i)",
+            row, id: pinID(candidate.id, index: i),
             kind: candidate.categories.count > 1 ? "multiple" : candidate.categories[0].rawValue,
             weak: candidate.weak))
       }
@@ -63,7 +79,7 @@ public struct MapPresentation: Sendable {
       for (i, session) in last.keys.sorted().enumerated() {
         result.pins.append(
           point(
-            last[session]!, id: "\(assessment.id)/\(i)", kind: "movement",
+            last[session]!, id: pinID(assessment.id, index: i), kind: "movement",
             weak: assessment.window?.qualifies != true))
       }
     }

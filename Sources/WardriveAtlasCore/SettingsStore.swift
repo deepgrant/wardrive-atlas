@@ -37,13 +37,57 @@ public struct TrustedSettings: Codable, Equatable, Sendable {
     return settings
   }
 }
+public struct RuleIssueState: Sendable {
+  public var unreadableFile = false
+  public var invalidChange: String?
+  public init() {}
+}
+public struct TrustIssueState: Sendable {
+  public var unreadableFile = false
+  public var capacityReached = false
+  public init() {}
+}
 public struct SettingsSnapshot: Sendable {
   public var rules = RuleSettings()
   public var savedTrust = TrustedSettings()
   public var trustOverrides: [TrustedDevice: Bool] = [:]
   public var rulesPending = false
-  public var warning: String?
+  public var ruleIssues = RuleIssueState()
+  public var trustIssues = TrustIssueState()
   public init() {}
+  public var ruleWarnings: [String] {
+    var messages: [String] = []
+    if ruleIssues.unreadableFile {
+      messages.append(
+        "Saved rules could not be read. Reset Custom Rules to replace the invalid file.")
+    }
+    if let invalid = ruleIssues.invalidChange { messages.append(invalid) }
+    if rulesPending {
+      messages.append(
+        "Rule changes are session-only. Save changes to retry, or discard them to restore saved rules."
+      )
+    }
+    return messages
+  }
+  public var trustWarnings: [String] {
+    var messages: [String] = []
+    if trustIssues.unreadableFile {
+      messages.append(
+        "Saved trusted devices could not be read. No saved trust is active; the invalid file will not be overwritten."
+      )
+    }
+    if trustIssues.capacityReached {
+      messages.append(
+        "The saved trusted-device list is full. Remove an entry before adding another.")
+    }
+    if !trustOverrides.isEmpty {
+      messages.append(
+        "Trust changes remain session-only. Save each change explicitly to retry; quitting discards unsaved changes."
+      )
+    }
+    return messages
+  }
+  public var warnings: [String] { ruleWarnings + trustWarnings }
   public var effectiveTrust: Set<TrustedDevice> {
     var devices = Set(savedTrust.devices)
     for (device, trusted) in trustOverrides {
@@ -60,7 +104,6 @@ public actor SettingsStore {
   private let writer: Writer
   private var snapshot = SettingsSnapshot()
   private var loaded = false
-  private var ruleFileInvalid = false
   public init(
     directory: URL? = nil, writer: @escaping Writer = { try $0.write(to: $1, options: .atomic) }
   ) {
@@ -83,14 +126,9 @@ public actor SettingsStore {
       if FileManager.default.fileExists(atPath: rulesURL.path) {
         snapshot.rules = try RuleSettings.parse(Data(contentsOf: rulesURL))
       }
-    } catch {
-      ruleFileInvalid = true
-      snapshot.warning =
-        "Saved rules could not be read. Built-in rules remain active. Reset custom rules to replace the invalid file."
-    }
+    } catch { snapshot.ruleIssues.unreadableFile = true }
     do { snapshot.savedTrust = try readTrust() } catch {
-      snapshot.warning =
-        "Saved trusted devices could not be read. No saved trust is active; the invalid file will not be overwritten."
+      snapshot.trustIssues.unreadableFile = true
     }
     return snapshot
   }
@@ -107,7 +145,10 @@ public actor SettingsStore {
       do {
         latest = try readTrust()
         snapshot.savedTrust = latest
+        snapshot.trustIssues.unreadableFile = false
+        if latest.devices.count < 10_000 { snapshot.trustIssues.capacityReached = false }
       } catch {
+        snapshot.trustIssues.unreadableFile = true
         snapshot.savedTrust = .init()
         throw error
       }
@@ -117,21 +158,16 @@ public actor SettingsStore {
         latest.devices.removeAll { $0 == device }
       }
       guard latest.devices.count <= 10_000 else {
-        snapshot.warning =
-          "The saved trusted-device list is full. Remove an entry before adding another."
+        snapshot.trustIssues.capacityReached = true
         return snapshot
       }
       _ = try TrustedSettings.parse(JSONEncoder().encode(latest))
       try write(latest, to: trustURL)
       snapshot.savedTrust = latest
       snapshot.trustOverrides.removeValue(forKey: device)
-      snapshot.warning =
-        snapshot.trustOverrides.isEmpty
-        ? nil : "Some changes remain session-only. Save each change explicitly to retry."
+      if latest.devices.count < 10_000 { snapshot.trustIssues.capacityReached = false }
     } catch {
       snapshot.trustOverrides[device] = trusted
-      snapshot.warning =
-        "This trust change is session-only because settings could not be saved. Use Save change to retry; quitting discards it."
     }
     return snapshot
   }
@@ -139,33 +175,41 @@ public actor SettingsStore {
     _ settings: RuleSettings, explicitRetry: Bool = false, reset: Bool = false
   ) -> SettingsSnapshot {
     _ = load()
-    if snapshot.rulesPending && !explicitRetry && !reset {
-      snapshot.warning = "Save or discard the pending rule change before editing more rules."
+    if snapshot.rulesPending && !explicitRetry && !reset { return snapshot }
+    let validated: RuleSettings
+    do {
+      validated = try RuleSettings.parse(JSONEncoder().encode(settings))
+    } catch {
+      snapshot.ruleIssues.invalidChange = error.localizedDescription
       return snapshot
     }
+    snapshot.rules = validated
+    snapshot.ruleIssues.invalidChange = nil
     do {
-      let validated = try RuleSettings.parse(JSONEncoder().encode(settings))
-      snapshot.rules = validated
-      guard !ruleFileInvalid || reset else { throw AtlasError.invalid("Invalid saved rule file.") }
+      guard !snapshot.ruleIssues.unreadableFile || reset else {
+        throw AtlasError.invalid("Invalid saved rule file.")
+      }
       try write(validated, to: rulesURL)
       snapshot.rulesPending = false
-      ruleFileInvalid = false
-      snapshot.warning = nil
+      snapshot.ruleIssues.unreadableFile = false
     } catch {
       snapshot.rulesPending = true
-      snapshot.warning =
-        "Rule changes are session-only. Save changes to retry, or discard them to restore saved rules."
     }
     return snapshot
   }
   public func discardPendingRules() -> SettingsSnapshot {
+    _ = load()
     do {
       snapshot.rules =
         FileManager.default.fileExists(atPath: rulesURL.path)
         ? try RuleSettings.parse(Data(contentsOf: rulesURL)) : .init()
-    } catch { snapshot.rules = .init() }
+      snapshot.ruleIssues.unreadableFile = false
+    } catch {
+      snapshot.rules = .init()
+      snapshot.ruleIssues.unreadableFile = true
+    }
     snapshot.rulesPending = false
-    snapshot.warning = nil
+    snapshot.ruleIssues.invalidChange = nil
     return snapshot
   }
 }

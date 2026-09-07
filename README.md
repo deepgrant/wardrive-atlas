@@ -20,6 +20,7 @@ The project follows the same XcodeGen, Swift Package Manager, and Gradle structu
 ./gradlew buildApp
 ./gradlew runApp
 ./gradlew test
+./gradlew testApp
 ./gradlew testUI
 ./gradlew check
 ./gradlew dmg
@@ -29,7 +30,7 @@ The project follows the same XcodeGen, Swift Package Manager, and Gradle structu
 
 Gradle regenerates the Xcode project when configuration or source layout changes and retains Xcode's DerivedData under `build/xcode/`. Unchanged builds skip compilation. Use `-PxcodeJobs=8` to adjust compilation parallelism or `-PwardriveAtlasVersion=0.2.0` to override the version in `project.yml`. Gradle 9.7.1 is pinned with its distribution checksum.
 
-`Package.swift` defines the Swift core library, executable, and core tests. `project.yml` defines the equivalent native framework/application targets and the UI test target. Swift 6.3 tooling uses Swift 5 language mode, matching pidex. Only Apple frameworks are used; no external packages are resolved.
+`Package.swift` defines the Swift core library, executable, and core tests. `project.yml` also defines hosted app unit tests and UI tests in the shared scheme. `test` runs the SwiftPM core tests, `testApp` runs the hosted app tests, and `check` runs both. `testUI` remains a separate interactive desktop check. Swift 6.3 tooling uses Swift 5 language mode, matching pidex. Only Apple frameworks are used; no external packages are resolved.
 
 The application icon's master artwork, standalone Mac icon, generation prompt, and resizing instructions are in [Artwork](Artwork/README.md). All required icon sizes are checked in; ordinary builds need no image-generation tools.
 
@@ -81,7 +82,7 @@ Imported captures and analysis results remain in memory. **Clear Captures** remo
 
 Trusted identities preserve the version-1 format `{version: 1, devices: [{digest, type}]}`. The digest is the full SHA-256 of `wardrive-atlas:co-travel:v1|<radio>|<normalized address>`. No raw addresses, names, coordinates, timestamps, or capture rows are stored in this file.
 
-One app-wide settings service serializes atomic writes. Failed trust operations remain explicitly session-only; an unrelated successful operation never silently saves them. **Save change** explicitly retries that identity. Failed rule saves offer **Save changes** and **Discard changes** before further editing. Invalid trust files are not overwritten. Resetting custom rules leaves trusted identities intact.
+One app-wide settings service serializes atomic writes. Failed trust operations remain explicitly session-only; an unrelated successful operation never silently saves them. **Save change** explicitly retries that identity. Failed rule saves offer **Save changes** and **Discard changes** before further editing. Rules and trust show independent warnings in the sidebar and their corresponding Settings tabs; resolving one issue leaves the others visible. Invalid trust files are not overwritten. Resetting custom rules leaves trusted identities intact.
 
 Browser storage is not migrated automatically. Previously exported custom-rule JSON files remain importable. The native trusted list starts empty.
 
@@ -89,7 +90,7 @@ Apple Maps contacts Apple for street-map resources when enabled. Disable **Stree
 
 ## Verification and distribution
 
-Core tests cover import boundaries, the preserved synthetic reference outputs, detection rules, rolling-window evidence against a brute-force oracle, map-property privacy, concurrent settings changes, failure/retry semantics, and cancellation. UI tests use isolated settings directories and synthetic captures.
+Core tests cover import boundaries, the preserved synthetic reference outputs, detection rules, rolling-window evidence against a brute-force oracle, ranking ties, map-property privacy, concurrent settings changes, independent failure/retry semantics, and cancellation. Hosted app tests cover stale selections, deliberately out-of-order analysis/projection, cached trust filtering, bounded viewport geometry, and heatmap frame placement. App and UI tests use isolated settings directories and offline startup.
 
 Run the release-mode workload benchmark with:
 
@@ -98,6 +99,16 @@ ATLAS_BENCHMARK=1 swift test -c release --filter BenchmarkTests
 ```
 
 Use `ATLAS_UI_BENCHMARK=1 ./gradlew testUI` to include the 10,000/100,000-row native map workload. To run one UI test, use `-PuiTest=WardriveAtlasUITests/WardriveAtlasUITests/testCSVImportFromNativePanel`.
+
+Measure release-mode trust filtering with 0, 1,000, and 10,000 saved identities using:
+
+```sh
+ATLAS_TRUST_BENCHMARK=1 ./gradlew testApp \
+  -PappTestConfiguration=Release \
+  -PappTest=WardriveAtlasAppTests/AppCoordinatorTests/testTrustPerformance
+```
+
+The large UI workload also exercises Co-travel and a Trusted settings tab populated with 10,000 entries. Benchmarks record timings without machine-dependent pass/fail thresholds.
 
 See [validation results](Documentation/VALIDATION.md) for measured results and limits, and [native architecture](Documentation/ARCHITECTURE.md) for implementation details. Live scanning, saved capture archives, and downloaded offline street maps are outside this version.
 

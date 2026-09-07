@@ -56,8 +56,12 @@ struct InspectorView: View {
             }
             Button("Dismiss candidate for this session") { app.dismissCandidate() }
           }
-          if let assessment = app.selectedMovement { movementDetails(assessment) }
-          if let identity = row.identity { trustControls(identity) }
+          if let assessment = app.selectedMovement {
+            movementDetails(assessment)
+            if let identity = assessment.identity { trustControls(identity) }
+          } else if let identity = row.identity {
+            trustControls(identity)
+          }
           Divider()
           Text(
             "Positions show where the receiver observed a signal, not a device's estimated location. Signal strength is not a calibrated distance measurement."
@@ -94,7 +98,7 @@ struct InspectorView: View {
     }
   }
   @ViewBuilder private func trustControls(_ device: TrustedDevice) -> some View {
-    let trusted = app.settings.effectiveTrust.contains(device)
+    let trusted = app.trustedIdentities.contains(device)
     Button(trusted ? "Remove trust" : "Mark as trusted") { app.trust(device, !trusted) }.disabled(
       app.saving)
     if let pending = app.settings.trustOverrides[device] {

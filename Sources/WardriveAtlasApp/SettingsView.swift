@@ -78,7 +78,7 @@ struct AtlasSettingsView: View {
             }
           }
         }
-        if let warning = app.settings.warning {
+        ForEach(app.settings.ruleWarnings, id: \.self) { warning in
           Text(warning).font(.caption).foregroundStyle(.orange)
         }
         if app.settings.rulesPending {
@@ -99,16 +99,15 @@ struct AtlasSettingsView: View {
         ).font(.caption2).foregroundStyle(.secondary)
       }.padding(20).tabItem { Label("Rules", systemImage: "line.3.horizontal.decrease.circle") }
       ScrollView {
-        VStack(alignment: .leading, spacing: 12) {
+        LazyVStack(alignment: .leading, spacing: 12) {
           Text("Trusted devices").font(.title2.bold())
           Text(
             "Saved entries are digest aliases. Raw addresses, names, locations, and capture rows are never stored here."
           ).font(.caption).foregroundStyle(.secondary)
-          ForEach(
-            Array(app.settings.effectiveTrust.union(app.settings.trustOverrides.keys)).sorted {
-              $0.id < $1.id
-            }
-          ) { device in
+          ForEach(app.settings.trustWarnings, id: \.self) { warning in
+            Text(warning).font(.caption).foregroundStyle(.orange)
+          }
+          ForEach(app.trustedRows) { device in
             HStack {
               VStack(alignment: .leading) {
                 Text(app.addressPrivacy == .hide ? "Hidden" : device.alias)
@@ -119,8 +118,8 @@ struct AtlasSettingsView: View {
                 Text("Session-only").font(.caption).foregroundStyle(.orange)
                 Button("Save change") { app.trust(device, pending) }
               }
-              Button(app.settings.effectiveTrust.contains(device) ? "Remove trust" : "Trust") {
-                app.trust(device, !app.settings.effectiveTrust.contains(device))
+              Button(app.trustedIdentities.contains(device) ? "Remove trust" : "Trust") {
+                app.trust(device, !app.trustedIdentities.contains(device))
               }
             }.disabled(app.saving)
           }

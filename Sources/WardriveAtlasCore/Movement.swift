@@ -32,7 +32,8 @@ public struct Sighting: Sendable {
 }
 public struct MovementAssessment: Identifiable, Sendable {
   public var id: String
-  public var representative: Observation
+  public let representative: Observation
+  public let identity: TrustedDevice?
   public var records: [Observation]
   public var sightings: [Sighting]
   public var locations: Int
@@ -47,8 +48,7 @@ public struct MovementAssessment: Identifiable, Sendable {
 }
 public struct Coverage: Equatable, Sendable {
   public var total = 0, eligible = 0, excluded = 0, invalidAddress = 0, invalidTime = 0,
-    invalidFix = 0, invalidAccuracy = 0, duplicates = 0, independent = 0, locations = 0,
-    sessions = 0
+    invalidFix = 0, invalidAccuracy = 0, duplicates = 0, independent = 0, locations = 0
   public init() {}
 }
 public struct MovementResult: Sendable {
@@ -152,14 +152,30 @@ public enum MovementAnalysis {
   public static func better(_ a: EvidenceWindow?, than b: EvidenceWindow?) -> Bool {
     guard let a else { return false }
     guard let b else { return true }
-    if a.qualifies != b.qualifies { return a.qualifies }
-    if a.locations != b.locations { return a.locations > b.locations }
-    if a.sightingIds.count != b.sightingIds.count {
-      return a.sightingIds.count > b.sightingIds.count
-    }
-    if a.travelMeters != b.travelMeters { return a.travelMeters > b.travelMeters }
-    return a.last > b.last
+    return WindowRank(a).isPreferred(to: WindowRank(b))
   }
+
+  /// Shared ranking for a completed window and a window still being scanned.
+  private struct WindowRank {
+    let window: EvidenceWindow
+    let sightingCount: Int
+    init(_ window: EvidenceWindow, sightingCount: Int? = nil) {
+      self.window = window
+      self.sightingCount = sightingCount ?? window.sightingIds.count
+    }
+    func isPreferred(to other: Self) -> Bool {
+      if window.qualifies != other.window.qualifies { return window.qualifies }
+      if window.locations != other.window.locations {
+        return window.locations > other.window.locations
+      }
+      if sightingCount != other.sightingCount { return sightingCount > other.sightingCount }
+      if window.travelMeters != other.window.travelMeters {
+        return window.travelMeters > other.window.travelMeters
+      }
+      return window.last > other.window.last
+    }
+  }
+
   public static func strongestWindow(_ sightings: [Sighting], sensitivity: Sensitivity) throws
     -> EvidenceWindow?
   {
@@ -194,15 +210,11 @@ public enum MovementAnalysis {
           sightings: end - start + 1, locations: locations.count,
           elapsed: latest.timestamp! - first, meters: travel, sensitivity: sensitivity))
       let count = end - start + 1
+      let rank = WindowRank(current, sightingCount: count)
       let replace =
-        best == nil || current.qualifies && !best!.qualifies
-        || (current.qualifies == best!.qualifies
-          && (current.locations > best!.locations
-            || current.locations == best!.locations
-              && (count > bestRange.count
-                || count == bestRange.count
-                  && (current.travelMeters > best!.travelMeters
-                    || current.travelMeters == best!.travelMeters && current.last > best!.last))))
+        best.map {
+          rank.isPreferred(to: WindowRank($0, sightingCount: bestRange.count))
+        } ?? true
       if replace {
         best = current
         bestRange = start..<(end + 1)
@@ -217,7 +229,6 @@ public enum MovementAnalysis {
   ) throws -> MovementResult {
     var result = MovementResult()
     result.coverage.total = records.count
-    result.coverage.sessions = Set(records.map(\.session)).count
     var settings = RuleSettings()
     settings.custom = custom
     let rules = catalog.compiled(settings).filter { !$0.research && $0.category != .meta }
@@ -263,6 +274,7 @@ public enum MovementAnalysis {
       result.assessments.append(
         MovementAssessment(
           id: "movement-\(result.assessments.count)", representative: representative,
+          identity: representative.identity,
           records: ordered, sightings: sightings,
           locations: locations, sessions: Set(rows.map(\.session)).count, context: context,
           contextLabels: cameras.sorted { $0.rawValue < $1.rawValue }, window: window))

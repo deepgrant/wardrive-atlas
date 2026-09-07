@@ -178,8 +178,17 @@ private final class CaptureDateParser {
   func parse(_ text: String) -> Double? {
     guard !text.isEmpty else { return nil }
     if let value = cached[text] { return value }
+    // Normalize only an ISO-shaped date/time separator; the formatters still validate the date.
+    var offsetText = text
+    if text.range(
+      of: "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}",
+      options: .regularExpression) != nil
+    {
+      let separator = offsetText.index(offsetText.startIndex, offsetBy: 10)
+      offsetText.replaceSubrange(separator...separator, with: "T")
+    }
     let date =
-      fractional.date(from: text) ?? iso.date(from: text)
+      fractional.date(from: offsetText) ?? iso.date(from: offsetText)
       ?? local.lazy.compactMap { $0.date(from: text) }.first
     guard let date else { return nil }
     let value = date.timeIntervalSince1970 * 1000

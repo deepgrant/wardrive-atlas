@@ -11,6 +11,7 @@ func pointColor(_ point: MapPoint) -> NSColor {
 }
 final class AtlasAnnotation: NSObject, MKAnnotation {
   let point: MapPoint
+  let token: MapSelectionToken
   let count: Int
   let bounds: MKMapRect?
   var coordinate: CLLocationCoordinate2D {
@@ -21,8 +22,9 @@ final class AtlasAnnotation: NSObject, MKAnnotation {
       ? "\(count.formatted()) observations in this area"
       : point.kind == "observation" ? "Observation" : "Observed here"
   }
-  init(_ point: MapPoint, count: Int = 1, bounds: MKMapRect? = nil) {
+  init(_ point: MapPoint, presentationID: UUID, count: Int = 1, bounds: MKMapRect? = nil) {
     self.point = point
+    self.token = MapSelectionToken(presentationID: presentationID, featureID: point.id)
     self.count = count
     self.bounds = bounds
   }
@@ -72,71 +74,6 @@ final class AtlasOverlayRenderer: MKOverlayRenderer {
         in: CGRect(
           x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2))
     }
-  }
-}
-
-/// Accumulate into a fixed grid, then blur in two passes. Work is bounded by points + grid area.
-enum Heatmap {
-  static func image(points: [MapPoint], rect: MKMapRect, size: Int = 256) throws -> CGImage? {
-    guard rect.width > 0, rect.height > 0 else { return nil }
-    var bins = Array(repeating: 0.0, count: size * size)
-    for (index, p) in points.enumerated() {
-      if index % 512 == 0 { try Task.checkCancellation() }
-      let mp = MKMapPoint(CLLocationCoordinate2D(latitude: p.latitude, longitude: p.longitude))
-      let x = Int((mp.x - rect.minX) / rect.width * Double(size))
-      let y = Int((mp.y - rect.minY) / rect.height * Double(size))
-      if x >= 0, y >= 0, x < size, y < size {
-        bins[y * size + x] += min(1, max(0, (p.rssi + 100) / 70))
-      }
-    }
-    let radius = 8
-    let kernel = (-8...8).map { exp(-Double($0 * $0) / 18) }
-    var horizontal = bins
-    var blurred = bins
-    for y in 0..<size {
-      try Task.checkCancellation()
-      for x in 0..<size {
-        var value = 0.0
-        for dx in -radius...radius where x + dx >= 0 && x + dx < size {
-          value += bins[y * size + x + dx] * kernel[dx + radius]
-        }
-        horizontal[y * size + x] = value
-      }
-    }
-    for y in 0..<size {
-      try Task.checkCancellation()
-      for x in 0..<size {
-        var value = 0.0
-        for dy in -radius...radius where y + dy >= 0 && y + dy < size {
-          value += horizontal[(y + dy) * size + x] * kernel[dy + radius]
-        }
-        blurred[y * size + x] = value
-      }
-    }
-    let maxValue = max(1, blurred.max() ?? 1)
-    let stops: [(Double, Double, Double)] = [
-      (41, 83, 159), (111, 63, 176), (192, 45, 131), (228, 61, 48), (255, 176, 0),
-    ]
-    var pixels = Array(repeating: UInt8(0), count: size * size * 4)
-    for i in blurred.indices {
-      let value = min(1, blurred[i] / maxValue)
-      let stop = min(3, Int(value * 4))
-      let t = value * 4 - Double(stop)
-      let a = stops[stop]
-      let b = stops[stop + 1]
-      let alpha = min(0.88, value * 2)
-      pixels[i * 4] = UInt8((a.0 + (b.0 - a.0) * t) * alpha)
-      pixels[i * 4 + 1] = UInt8((a.1 + (b.1 - a.1) * t) * alpha)
-      pixels[i * 4 + 2] = UInt8((a.2 + (b.2 - a.2) * t) * alpha)
-      pixels[i * 4 + 3] = UInt8(alpha * 255)
-    }
-    let data = Data(pixels) as CFData
-    guard let provider = CGDataProvider(data: data) else { return nil }
-    return CGImage(
-      width: size, height: size, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: size * 4,
-      space: CGColorSpaceCreateDeviceRGB(),
-      bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
-      provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent)
   }
 }
 
@@ -231,6 +168,7 @@ struct NativeMapView: NSViewRepresentable {
     var revision = -1, fit = -1, needsInitialFit = true
     var mode: MapMode = .points
     var focus: Selection?
+    var displayed = MapPresentation()
     var heatWork: Task<CGImage?, Error>?, heatTask: Task<Void, Never>?
     var annotationWork: Task<[DisplayAnnotation], Error>?
     var annotationTask: Task<Void, Never>?
@@ -245,6 +183,7 @@ struct NativeMapView: NSViewRepresentable {
       map.removeAnnotations(map.annotations)
       map.removeOverlays(map.overlays)
       let data = app.presentation
+      displayed = data
       scheduleAnnotations()
       if mode == .points, !data.points.isEmpty {
         map.addOverlay(AtlasOverlay(points: data.points))
@@ -267,7 +206,7 @@ struct NativeMapView: NSViewRepresentable {
       let ticket = annotationGeneration
       annotationWork?.cancel()
       annotationTask?.cancel()
-      let data = app.presentation
+      let data = displayed
       let points = mode == .clusters ? data.points : []
       let rect = map.visibleMapRect.insetBy(
         dx: -map.visibleMapRect.width * 0.15, dy: -map.visibleMapRect.height * 0.15)
@@ -285,7 +224,9 @@ struct NativeMapView: NSViewRepresentable {
         else { return }
         map.removeAnnotations(map.annotations)
         map.addAnnotations(
-          annotations.map { AtlasAnnotation($0.point, count: $0.count, bounds: $0.bounds) })
+          annotations.map {
+            AtlasAnnotation($0.point, presentationID: data.id, count: $0.count, bounds: $0.bounds)
+          })
       }
     }
     func scheduleHeatmap() {
@@ -294,7 +235,7 @@ struct NativeMapView: NSViewRepresentable {
       let ticket = heatGeneration
       heatWork?.cancel()
       heatTask?.cancel()
-      let points = app.presentation.points
+      let points = displayed.points
       let rect = map.visibleMapRect.insetBy(
         dx: -map.visibleMapRect.width * 0.1, dy: -map.visibleMapRect.height * 0.1)
       heatTask = Task { [weak self] in
@@ -385,7 +326,7 @@ struct NativeMapView: NSViewRepresentable {
             bounds.insetBy(dx: -max(1, bounds.width * 0.2), dy: -max(1, bounds.height * 0.2)),
             animated: true)
         } else {
-          app.selectMap(item.point.id)
+          app.selectMap(item.token)
         }
       }
       mapView.deselectAnnotation(annotation, animated: false)
@@ -393,7 +334,7 @@ struct NativeMapView: NSViewRepresentable {
     @objc func clicked(_ recognizer: NSClickGestureRecognizer) {
       guard let map, mode != .clusters else { return }
       let location = recognizer.location(in: map)
-      for values in [app.presentation.pins, app.presentation.points] {
+      for values in [displayed.pins, displayed.points] {
         var nearest: (String, CGFloat)?
         for p in values {
           let screen = map.convert(
@@ -402,7 +343,7 @@ struct NativeMapView: NSViewRepresentable {
           if distance < 16, distance < (nearest?.1 ?? .infinity) { nearest = (p.id, distance) }
         }
         if let nearest {
-          app.selectMap(nearest.0)
+          app.selectMap(displayed.token(for: nearest.0))
           return
         }
       }

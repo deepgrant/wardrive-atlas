@@ -8,11 +8,10 @@ struct OfflineMapView: View {
   @State private var dragStart: MKMapRect?
   @State private var fitted = false
   @State private var focus: Selection?
-  @State private var heatImage: CGImage?
-  @State private var heatTask: Task<CGImage?, Error>?
-  @State private var heatRevision = 0
+  @StateObject private var heatmap = HeatmapState()
   var body: some View {
     GeometryReader { geometry in
+      let displayed = app.presentation
       Canvas(rendersAsynchronously: true) { context, size in
         context.fill(
           Path(CGRect(origin: .zero, size: size)),
@@ -48,11 +47,14 @@ struct OfflineMapView: View {
               anchor: .topLeading)
           }
         }
-        if app.mapMode == .heatmap, let heatImage {
+        if app.mapMode == .heatmap, let frame = heatmap.frame,
+          frame.presentationID == displayed.id
+        {
           context.draw(
-            Image(decorative: heatImage, scale: 1), in: CGRect(origin: .zero, size: size))
+            Image(decorative: frame.image, scale: 1),
+            in: MapViewport.screenRect(frame.rect, in: rect, size: size))
         }
-        for route in app.presentation.paths {
+        for route in displayed.paths {
           var path = Path()
           for (i, p) in route.coordinates.enumerated() {
             if i == 0 { path.move(to: screen(p)) } else { path.addLine(to: screen(p)) }
@@ -63,7 +65,7 @@ struct OfflineMapView: View {
         }
         if app.mapMode == .clusters {
           var clusters: [String: (CGPoint, Int)] = [:]
-          for p in app.presentation.points {
+          for p in displayed.points {
             let s = screen(p)
             guard s.x >= 0, s.y >= 0, s.x < size.width, s.y < size.height else { continue }
             let key = "\(Int(s.x / 42)):\(Int(s.y / 42))"
@@ -80,7 +82,7 @@ struct OfflineMapView: View {
                 .white), at: center)
           }
         }
-        for p in app.presentation.points where app.mapMode == .points || p.selected {
+        for p in displayed.points where app.mapMode == .points || p.selected {
           let s = screen(p)
           guard s.x >= -10, s.y >= -10, s.x <= size.width + 10, s.y <= size.height + 10 else {
             continue
@@ -92,7 +94,7 @@ struct OfflineMapView: View {
                 x: s.x - radius, y: s.y - radius, width: radius * 2, height: radius * 2)),
             with: .color(Color(nsColor: pointColor(p))))
         }
-        for p in app.presentation.pins {
+        for p in displayed.pins {
           let s = screen(p)
           let box = CGRect(x: s.x - 9, y: s.y - 9, width: 18, height: 18)
           let path = Path(ellipseIn: box)
@@ -112,14 +114,17 @@ struct OfflineMapView: View {
         }
       }
       .accessibilityLabel("Offline coordinate grid")
+      .accessibilityIdentifier("offlineGrid")
       .gesture(
         DragGesture(minimumDistance: 3).onChanged { value in
           if dragStart == nil { dragStart = rect }
           guard let start = dragStart else { return }
-          rect = MKMapRect(
-            x: start.minX - value.translation.width / geometry.size.width * start.width,
-            y: start.minY - value.translation.height / geometry.size.height * start.height,
-            width: start.width, height: start.height)
+          guard geometry.size.width > 0, geometry.size.height > 0 else { return }
+          rect = MapViewport.constrained(
+            MKMapRect(
+              x: start.minX - value.translation.width / geometry.size.width * start.width,
+              y: start.minY - value.translation.height / geometry.size.height * start.height,
+              width: start.width, height: start.height))
         }.onEnded { _ in
           dragStart = nil
           updateHeat()
@@ -127,7 +132,7 @@ struct OfflineMapView: View {
       )
       .simultaneousGesture(
         SpatialTapGesture().onEnded { value in
-          for points in [app.presentation.pins, app.presentation.points] {
+          for points in [displayed.pins, displayed.points] {
             let nearest = points.map { p -> (MapPoint, Double) in
               let mp = MKMapPoint(
                 CLLocationCoordinate2D(latitude: p.latitude, longitude: p.longitude))
@@ -139,7 +144,7 @@ struct OfflineMapView: View {
               )
             }.filter { $0.1 < 20 }.min { $0.1 < $1.1 }
             if let nearest {
-              app.selectMap(nearest.0.id)
+              app.selectMap(displayed.token(for: nearest.0.id))
               return
             }
           }
@@ -151,12 +156,12 @@ struct OfflineMapView: View {
             zoom(0.5)
           } label: {
             Image(systemName: "plus")
-          }.help("Zoom in")
+          }.help("Zoom in").accessibilityIdentifier("gridZoomIn")
           Button {
             zoom(2)
           } label: {
             Image(systemName: "minus")
-          }.help("Zoom out")
+          }.help("Zoom out").accessibilityIdentifier("gridZoomOut")
         }.padding().buttonStyle(.borderedProminent).tint(.indigo)
       }
       .onAppear { fit() }
@@ -173,16 +178,11 @@ struct OfflineMapView: View {
         updateHeat()
       }
       .onChange(of: app.mapMode) { updateHeat() }
-      .onDisappear {
-        heatTask?.cancel()
-        heatRevision += 1
-      }
+      .onDisappear { heatmap.clear() }
     }
   }
   private func zoom(_ factor: Double) {
-    rect = MKMapRect(
-      x: rect.midX - rect.width * factor / 2, y: rect.midY - rect.height * factor / 2,
-      width: rect.width * factor, height: rect.height * factor)
+    rect = MapViewport.zoom(rect, by: factor)
     updateHeat()
   }
   private func fit(selected: Bool = false) {
@@ -195,25 +195,16 @@ struct OfflineMapView: View {
           size: MKMapSize(width: 1, height: 1)))
     }
     guard !bounds.isNull else { return }
-    rect = bounds.insetBy(dx: -max(1500, bounds.width * 0.12), dy: -max(1500, bounds.height * 0.12))
+    rect = MapViewport.constrained(
+      bounds.insetBy(dx: -max(1500, bounds.width * 0.12), dy: -max(1500, bounds.height * 0.12)))
     fitted = true
     updateHeat()
   }
   private func updateHeat() {
-    heatRevision += 1
-    let ticket = heatRevision
-    heatTask?.cancel()
-    guard app.mapMode == .heatmap else {
-      heatImage = nil
-      return
-    }
-    let points = app.presentation.points
-    let bounds = rect
-    let work = Task.detached { try Heatmap.image(points: points, rect: bounds) }
-    heatTask = work
-    Task {
-      let image = try? await work.value
-      if ticket == heatRevision { heatImage = image }
+    if app.mapMode == .heatmap {
+      heatmap.update(app.presentation, rect: rect)
+    } else {
+      heatmap.clear()
     }
   }
 }

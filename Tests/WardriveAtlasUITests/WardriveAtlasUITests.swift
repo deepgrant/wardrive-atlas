@@ -1,18 +1,84 @@
+import CryptoKit
 import XCTest
 
 final class WardriveAtlasUITests: XCTestCase {
   private var application: XCUIApplication!
+  private var settingsDirectory: URL!
   override func setUpWithError() throws {
     continueAfterFailure = false
     application = XCUIApplication()
+    // The shared scheme isolates hosted unit tests; this child runs normal UI startup.
+    application.launchEnvironment["ATLAS_APP_TESTS"] = "0"
     application.launchEnvironment["ATLAS_OFFLINE"] = "1"
-    application.launchEnvironment["ATLAS_SETTINGS_DIRECTORY"] =
-      FileManager.default.temporaryDirectory.appendingPathComponent("atlas-ui-\(UUID().uuidString)")
-      .path
+    settingsDirectory = FileManager.default.temporaryDirectory.appendingPathComponent(
+      "atlas-ui-\(UUID().uuidString)")
+    application.launchEnvironment["ATLAS_SETTINGS_DIRECTORY"] = settingsDirectory.path
     application.launch()
     _ = application.windows.firstMatch.waitForExistence(timeout: 10)
   }
-  override func tearDownWithError() throws { application.terminate() }
+  override func tearDownWithError() throws {
+    application.terminate()
+    try? FileManager.default.removeItem(at: settingsDirectory)
+  }
+
+  private func selectControl(_ label: String) {
+    let control =
+      application.buttons[label].exists
+      ? application.buttons[label] : application.radioButtons[label]
+    XCTAssertTrue(control.waitForExistence(timeout: 10))
+    control.click()
+  }
+
+  private func capture(_ name: String) {
+    let attachment = XCTAttachment(screenshot: application.windows.firstMatch.screenshot())
+    attachment.name = name
+    attachment.lifetime = .keepAlways
+    add(attachment)
+  }
+
+  func testOfflineHeatmapPanAndZoom() throws {
+    application.buttons["loadSample"].click()
+    XCTAssertTrue(application.staticTexts["240"].firstMatch.waitForExistence(timeout: 20))
+    selectControl("Heatmap")
+    let grid = application.descendants(matching: .any)["offlineGrid"].firstMatch
+    XCTAssertTrue(grid.waitForExistence(timeout: 10))
+    capture("Offline heatmap before pan")
+    grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(
+      forDuration: 0.2,
+      thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.65)))
+    capture("Offline heatmap after pan")
+    application.buttons["gridZoomIn"].click()
+    capture("Offline heatmap after zoom")
+    application.buttons["gridZoomOut"].click()
+    application.typeKey("0", modifierFlags: .command)
+    XCTAssertTrue(application.staticTexts["240"].firstMatch.exists)
+  }
+
+  func testSettingsShowIndependentWarnings() throws {
+    application.terminate()
+    try FileManager.default.createDirectory(
+      at: settingsDirectory, withIntermediateDirectories: true)
+    for name in ["rules-v1.json", "trust-v1.json"] {
+      try Data("invalid".utf8).write(to: settingsDirectory.appendingPathComponent(name))
+    }
+    application.launch()
+    let rulesWarning =
+      "Saved rules could not be read. Reset Custom Rules to replace the invalid file."
+    let trustWarning =
+      "Saved trusted devices could not be read. No saved trust is active; the invalid file will not be overwritten."
+    XCTAssertTrue(application.staticTexts[rulesWarning].firstMatch.waitForExistence(timeout: 10))
+    XCTAssertTrue(application.staticTexts[trustWarning].firstMatch.exists)
+    application.typeKey(",", modifierFlags: .command)
+    selectControl("Rules")
+    let rulesWindow = application.windows.containing(
+      .staticText, identifier: "Custom detection rules"
+    ).firstMatch
+    XCTAssertTrue(rulesWindow.staticTexts[rulesWarning].waitForExistence(timeout: 10))
+    selectControl("Trusted")
+    let trustWindow = application.windows.containing(.staticText, identifier: "Trusted devices")
+      .firstMatch
+    XCTAssertTrue(trustWindow.staticTexts[trustWarning].waitForExistence(timeout: 10))
+  }
   func testSampleModesSelectionAndClear() throws {
     let sample = application.buttons["loadSample"]
     XCTAssertTrue(sample.waitForExistence(timeout: 15))
@@ -54,7 +120,33 @@ final class WardriveAtlasUITests: XCTestCase {
     application.buttons["loadSample"].click()
     application.typeKey(",", modifierFlags: .command)
     XCTAssertTrue(application.windows.count >= 2)
+    selectControl("Privacy")
     XCTAssertTrue(application.staticTexts["Identifier privacy"].waitForExistence(timeout: 8))
+  }
+
+  func testMovementInspectorTrustsTheSelectedIdentity() throws {
+    application.buttons["loadSample"].click()
+    XCTAssertTrue(application.staticTexts["240"].firstMatch.waitForExistence(timeout: 20))
+    selectControl("Co-travel")
+    let companion = application.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "Sample route companion,")
+    ).firstMatch
+    XCTAssertTrue(companion.waitForExistence(timeout: 10))
+    companion.click()
+    let trust = application.buttons["Mark as trusted"]
+    XCTAssertTrue(trust.waitForExistence(timeout: 10))
+    trust.click()
+    application.typeKey(",", modifierFlags: .command)
+    selectControl("Trusted")
+    let digest = SHA256.hash(data: Data("wardrive-atlas:co-travel:v1|BLE|DA1020304050".utf8))
+      .map { String(format: "%02x", $0) }.joined()
+    XCTAssertTrue(
+      application.staticTexts["Saved device \(digest.prefix(12))"].waitForExistence(timeout: 10))
+    let saved =
+      try JSONSerialization.jsonObject(
+        with: Data(contentsOf: settingsDirectory.appendingPathComponent("trust-v1.json")))
+      as? [String: Any]
+    XCTAssertEqual(saved?["devices"] as? [[String: String]], [["digest": digest, "type": "BLE"]])
   }
   func testCSVImportFromNativePanel() throws {
     let file = FileManager.default.temporaryDirectory.appendingPathComponent(
@@ -140,12 +232,24 @@ final class WardriveAtlasUITests: XCTestCase {
     guard ProcessInfo.processInfo.environment["ATLAS_UI_BENCHMARK"] == "1" else {
       throw XCTSkip("Run with ATLAS_UI_BENCHMARK=1 for the 10k/100k map workloads.")
     }
+    application.terminate()
+    try FileManager.default.createDirectory(
+      at: settingsDirectory, withIntermediateDirectories: true)
+    let devices = (0..<10_000).map { ["digest": String(format: "%064x", $0), "type": "BLE"] }
+    let data = try JSONSerialization.data(withJSONObject: ["version": 1, "devices": devices])
+    try data.write(to: settingsDirectory.appendingPathComponent("trust-v1.json"))
     for count in [10_000, 100_000] {
       application.terminate()
       application.launchEnvironment["ATLAS_BENCHMARK_COUNT"] = String(count)
       application.launch()
       XCTAssertTrue(
         application.staticTexts[count.formatted()].firstMatch.waitForExistence(timeout: 90))
+      let coTravelStart = Date()
+      selectControl("Co-travel")
+      XCTAssertTrue(application.staticTexts["Sensitivity"].waitForExistence(timeout: 10))
+      print(
+        "ATLAS_UI_BENCHMARK rows=\(count) savedTrust=10000 Co-travel: \(Date().timeIntervalSince(coTravelStart)) seconds"
+      )
       for streetMap in [false, true] {
         if streetMap { application.checkBoxes["streetMap"].click() }
         let start = Date()
@@ -162,6 +266,18 @@ final class WardriveAtlasUITests: XCTestCase {
         screenshot.lifetime = .keepAlways
         add(screenshot)
       }
+      let settingsStart = Date()
+      application.typeKey(",", modifierFlags: .command)
+      selectControl("Trusted")
+      XCTAssertTrue(
+        application.staticTexts["Saved device 000000000000"].firstMatch.waitForExistence(
+          timeout: 10))
+      print(
+        "ATLAS_UI_BENCHMARK rows=\(count) savedTrust=10000 Trusted settings: \(Date().timeIntervalSince(settingsStart)) seconds"
+      )
+      capture("Populated Trusted settings at \(count) observations")
+      application.windows.containing(.staticText, identifier: "Trusted devices").firstMatch
+        .buttons[XCUIIdentifierCloseWindow].click()
       application.buttons["clearCaptures"].click()
       XCTAssertTrue(application.buttons["loadSample"].waitForExistence(timeout: 10))
     }

@@ -146,7 +146,6 @@ public struct Candidate: Identifiable, Sendable {
   public var evidence: [DetectionRule]
   public var categories: [DetectionCategory]
   public var strongest: Double?
-  public var firstSeen: Double?
   public var lastSeen: Double?
   public var weak: Bool { evidence.allSatisfy(\.research) }
 }
@@ -241,7 +240,6 @@ public enum NotableAnalysis {
           categories: DetectionCategory.allCases.filter { category in
             sorted.contains { $0.category == category }
           }, strongest: rows.compactMap(\.rssi).max(),
-          firstSeen: rows.compactMap(\.timestamp).min(),
           lastSeen: rows.compactMap(\.timestamp).max()))
     }
     return sorted(candidates, by: .evidence)

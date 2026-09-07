@@ -1,4 +1,3 @@
-import Charts
 import SwiftUI
 import WardriveAtlasCore
 
@@ -139,7 +138,7 @@ struct SidebarView: View {
           Text("Co-travel").tag("Co-travel")
         }.pickerStyle(.segmented).accessibilityIdentifier("analysisPanel")
         if app.analysisPanel == "Notable" { notable } else { coTravel }
-        if let warning = app.settings.warning {
+        ForEach(app.settings.warnings, id: \.self) { warning in
           Label(warning, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(
             .orange)
         }

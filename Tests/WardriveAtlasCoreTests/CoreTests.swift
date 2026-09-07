@@ -457,3 +457,51 @@ struct SampleTests {
       })
   }
 }
+
+struct ReviewRegressionTests {
+  @Test(arguments: ["America/New_York", "Asia/Tokyo"])
+  func explicitOffsetsUseTheirOwnTimezone(_ zone: String) throws {
+    for fraction in ["", ".125"] {
+      let equivalent = [
+        "2026-08-29T14:30:00\(fraction)Z", "2026-08-29 14:30:00\(fraction)Z",
+        "2026-08-29T10:30:00\(fraction)-04:00", "2026-08-29 10:30:00\(fraction)-04:00",
+        "2026-08-29T16:30:00\(fraction)+02:00", "2026-08-29 16:30:00\(fraction)+02:00",
+        "2026-08-29 10:30:00\(fraction)-0400", "2026-08-29 16:30:00\(fraction)+0200",
+      ]
+      let csv =
+        "MAC,SSID,CurrentLatitude,CurrentLongitude,FirstSeen\n"
+        + equivalent.map { "DA1020304050,Example,42,-71,\($0)" }.joined(separator: "\n")
+      let rows = try CSVImporter.parse(
+        csv, session: "offsets", timeZone: #require(TimeZone(identifier: zone)))
+      let expected = try #require(rows[0].timestamp)
+      #expect(rows.allSatisfy { $0.timestamp == expected })
+    }
+    let csv =
+      "MAC,SSID,CurrentLatitude,CurrentLongitude,FirstSeen\nDA1020304050,Example,42,-71,not 2026-08-29 14:30:00Z"
+    #expect(try CSVImporter.parse(csv, session: "invalid")[0].timestamp == nil)
+  }
+
+  @Test func rankingUsesEveryTieBreakerInOrder() {
+    func window(
+      _ qualified: Bool, _ locations: Int, _ sightings: Int, _ span: Double, _ last: Double
+    ) -> EvidenceWindow {
+      EvidenceWindow(
+        first: 0, last: last, sightingIds: (0..<sightings).map(String.init),
+        locations: locations, travelMeters: span, qualifies: qualified)
+    }
+    let ordered = [
+      window(true, 2, 3, 500, 10), window(false, 4, 6, 900, 20),
+      window(false, 3, 8, 1_000, 30), window(false, 3, 7, 1_100, 40),
+      window(false, 3, 7, 1_000, 50), window(false, 3, 7, 1_000, 40),
+    ]
+    for a in ordered.indices {
+      #expect(!MovementAnalysis.better(ordered[a], than: ordered[a]))
+      for b in ordered.indices where b > a {
+        #expect(MovementAnalysis.better(ordered[a], than: ordered[b]))
+        #expect(!MovementAnalysis.better(ordered[b], than: ordered[a]))
+      }
+    }
+    #expect(!MovementAnalysis.better(nil, than: ordered[0]))
+    #expect(MovementAnalysis.better(ordered[0], than: nil))
+  }
+}
