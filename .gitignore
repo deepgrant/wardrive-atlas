@@ -1,10 +1,12 @@
-node_modules/
-dist/
-.gradle/
 .DS_Store
-*.class
-*.tasty
+.build/
+.swiftpm/
+.gradle/
+build/
+dist/
+xcuserdata/
+*.hmap
+*.dSYM
+*.dSYM.zip
+*.profraw
 *.log
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*

@@ -1,0 +1,111 @@
+name: WardriveAtlas
+options:
+  bundleIdPrefix: com.deepgrant
+  deploymentTarget:
+    macOS: "26.0"
+  xcodeVersion: "26.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+    ARCHS: arm64
+    ONLY_ACTIVE_ARCH: false
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+targets:
+  WardriveAtlasCore:
+    type: framework
+    platform: macOS
+    sources:
+      - path: Sources/WardriveAtlasCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.deepgrant.WardriveAtlasCore
+        DEFINES_MODULE: true
+        GENERATE_INFOPLIST_FILE: true
+  WardriveAtlas:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/WardriveAtlasApp
+    info:
+      path: Configuration/WardriveAtlas-Info.plist
+      properties:
+        CFBundleDisplayName: Wardrive Atlas
+        CFBundleName: Wardrive Atlas
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.utilities
+        LSMultipleInstancesProhibited: true
+        NSHumanReadableCopyright: Copyright © 2026 Wardrive Atlas contributors
+    dependencies:
+      - target: WardriveAtlasCore
+    entitlements:
+      path: Configuration/WardriveAtlas.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.deepgrant.WardriveAtlas
+        PRODUCT_NAME: WardriveAtlas
+        ASSETCATALOG_COMPILER_APPICON_NAME: AtlasAppIcon
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        ENABLE_HARDENED_RUNTIME: true
+        ENABLE_APP_SANDBOX: false
+  WardriveAtlasCoreTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/WardriveAtlasCoreTests
+    dependencies:
+      - target: WardriveAtlasCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.deepgrant.WardriveAtlasCoreTests
+        GENERATE_INFOPLIST_FILE: true
+  WardriveAtlasAppTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/WardriveAtlasAppTests
+    dependencies:
+      - target: WardriveAtlas
+      - target: WardriveAtlasCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.deepgrant.WardriveAtlasAppTests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/WardriveAtlas.app/Contents/MacOS/WardriveAtlas
+        BUNDLE_LOADER: $(TEST_HOST)
+  WardriveAtlasUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: Tests/WardriveAtlasUITests
+    dependencies:
+      - target: WardriveAtlas
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.deepgrant.WardriveAtlasUITests
+        GENERATE_INFOPLIST_FILE: true
+schemes:
+  WardriveAtlas:
+    build:
+      targets:
+        WardriveAtlas: all
+        WardriveAtlasCore: [test]
+    test:
+      gatherCoverageData: true
+      environmentVariables:
+        ATLAS_UI_BENCHMARK: $(ATLAS_UI_BENCHMARK)
+        ATLAS_APP_TESTS: "1"
+        ATLAS_TRUST_BENCHMARK: $(ATLAS_TRUST_BENCHMARK)
+      targets:
+        - WardriveAtlasCoreTests
+        - WardriveAtlasAppTests
+        - WardriveAtlasUITests
+    run:
+      config: Debug
+    archive:
+      config: Release

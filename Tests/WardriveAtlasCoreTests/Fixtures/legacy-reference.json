@@ -1,0 +1,419 @@
+{
+  "records": [
+    {
+      "id": "morning.csv:0",
+      "session": "morning.csv",
+      "bssid": "B4:1E:52:00:00:01",
+      "ssid": "Penguin-SAMPLE, morning",
+      "authMode": "Unknown",
+      "security": "Other",
+      "firstSeen": "2026-08-29T10:00:00Z",
+      "timestamp": 1787997600000,
+      "channel": 0,
+      "band": "Bluetooth",
+      "rssi": -70,
+      "latitude": 42.6,
+      "longitude": -71.4,
+      "altitude": null,
+      "accuracy": null,
+      "manufacturerId": "09C8",
+      "type": "BLE"
+    },
+    {
+      "id": "morning.csv:1",
+      "session": "morning.csv",
+      "bssid": "B4:1E:52:00:00:01",
+      "ssid": "Penguin-SAMPLE, morning",
+      "authMode": "Unknown",
+      "security": "Other",
+      "firstSeen": "2026-08-29T10:01:00Z",
+      "timestamp": 1787997660000,
+      "channel": 0,
+      "band": "Bluetooth",
+      "rssi": -35,
+      "latitude": 42.6005,
+      "longitude": -71.3995,
+      "altitude": null,
+      "accuracy": null,
+      "manufacturerId": null,
+      "type": "BLE"
+    },
+    {
+      "id": "morning.csv:2",
+      "session": "morning.csv",
+      "bssid": "00:25:DF:00:00:02",
+      "ssid": "Sample body camera",
+      "authMode": "Unknown",
+      "security": "Other",
+      "firstSeen": "2026-08-29T10:02:00Z",
+      "timestamp": 1787997720000,
+      "channel": 0,
+      "band": "Bluetooth",
+      "rssi": -65,
+      "latitude": 42.601,
+      "longitude": -71.399,
+      "altitude": null,
+      "accuracy": null,
+      "manufacturerId": "034D",
+      "type": "BLE"
+    },
+    {
+      "id": "morning.csv:3",
+      "session": "morning.csv",
+      "bssid": "DA:00:00:00:00:03",
+      "ssid": "Ray-Ban SAMPLE",
+      "authMode": "Unknown",
+      "security": "Other",
+      "firstSeen": "2026-08-29T10:03:00Z",
+      "timestamp": 1787997780000,
+      "channel": 0,
+      "band": "Bluetooth",
+      "rssi": -50,
+      "latitude": 42.6015,
+      "longitude": -71.3985,
+      "altitude": null,
+      "accuracy": null,
+      "manufacturerId": null,
+      "type": "BLE"
+    },
+    {
+      "id": "morning.csv:4",
+      "session": "morning.csv",
+      "bssid": "70:C9:4E:00:00:04",
+      "ssid": "Sample research lead",
+      "authMode": "WPA2",
+      "security": "WPA2",
+      "firstSeen": "2026-08-29T10:04:00Z",
+      "timestamp": 1787997840000,
+      "channel": 6,
+      "band": "2.4 GHz",
+      "rssi": -55,
+      "latitude": 42.602,
+      "longitude": -71.398,
+      "altitude": null,
+      "accuracy": null,
+      "manufacturerId": null,
+      "type": "Wi-Fi"
+    },
+    {
+      "id": "morning.csv:5",
+      "session": "morning.csv",
+      "bssid": "F8:A2:D6:00:00:05",
+      "ssid": "Unrelated media player",
+      "authMode": "WPA2",
+      "security": "WPA2",
+      "firstSeen": "2026-08-29T10:05:00Z",
+      "timestamp": 1787997900000,
+      "channel": 6,
+      "band": "2.4 GHz",
+      "rssi": -40,
+      "latitude": 42.6025,
+      "longitude": -71.3975,
+      "altitude": null,
+      "accuracy": null,
+      "manufacturerId": null,
+      "type": "Wi-Fi"
+    },
+    {
+      "id": "morning.csv:6",
+      "session": "morning.csv",
+      "bssid": "DA:00:00:00:00:06",
+      "ssid": "Unrelated eyewear",
+      "authMode": "Unknown",
+      "security": "Other",
+      "firstSeen": "2026-08-29T10:06:00Z",
+      "timestamp": 1787997960000,
+      "channel": 0,
+      "band": "Bluetooth",
+      "rssi": -45,
+      "latitude": 42.603,
+      "longitude": -71.397,
+      "altitude": null,
+      "accuracy": null,
+      "manufacturerId": "0D53",
+      "type": "BLE"
+    },
+    {
+      "id": "evening.csv:0",
+      "session": "evening.csv",
+      "bssid": "b4-1e-52-00-00-01",
+      "ssid": "Hidden network",
+      "authMode": "Unknown",
+      "security": "Other",
+      "firstSeen": "2026-08-29T18:00:00Z",
+      "timestamp": 1788026400000,
+      "channel": 0,
+      "band": "Bluetooth",
+      "rssi": -50,
+      "latitude": 42.6002,
+      "longitude": -71.4002,
+      "altitude": null,
+      "accuracy": null,
+      "manufacturerId": null,
+      "type": "BLE"
+    },
+    {
+      "id": "evening.csv:1",
+      "session": "evening.csv",
+      "bssid": "b4-1e-52-00-00-01",
+      "ssid": "Hidden network",
+      "authMode": "Unknown",
+      "security": "Other",
+      "firstSeen": "2026-08-29T18:01:00Z",
+      "timestamp": 1788026460000,
+      "channel": 0,
+      "band": "Bluetooth",
+      "rssi": -40,
+      "latitude": 42.6007,
+      "longitude": -71.3997,
+      "altitude": null,
+      "accuracy": null,
+      "manufacturerId": null,
+      "type": "BLE"
+    },
+    {
+      "id": "evening.csv:2",
+      "session": "evening.csv",
+      "bssid": "DA:00:00:00:00:07",
+      "ssid": "0123456789",
+      "authMode": "Unknown",
+      "security": "Other",
+      "firstSeen": "2026-08-29T18:02:00Z",
+      "timestamp": 1788026520000,
+      "channel": 0,
+      "band": "Bluetooth",
+      "rssi": -70,
+      "latitude": 42.6017,
+      "longitude": -71.3987,
+      "altitude": null,
+      "accuracy": null,
+      "manufacturerId": null,
+      "type": "BLE"
+    }
+  ],
+  "candidates": [
+    {
+      "key": "BLE:B41E52000001",
+      "recordIds": [
+        "morning.csv:0",
+        "morning.csv:1",
+        "evening.csv:0",
+        "evening.csv:1"
+      ],
+      "representativeIds": [
+        "morning.csv:1",
+        "evening.csv:1"
+      ],
+      "evidence": [
+        "flock-company",
+        "flock-name-0",
+        "flock-oui"
+      ],
+      "categories": [
+        "flock"
+      ],
+      "weak": false
+    },
+    {
+      "key": "BLE:DA0000000003",
+      "recordIds": [
+        "morning.csv:3"
+      ],
+      "representativeIds": [
+        "morning.csv:3"
+      ],
+      "evidence": [
+        "meta-name-0"
+      ],
+      "categories": [
+        "meta"
+      ],
+      "weak": false
+    },
+    {
+      "key": "BLE:0025DF000002",
+      "recordIds": [
+        "morning.csv:2"
+      ],
+      "representativeIds": [
+        "morning.csv:2"
+      ],
+      "evidence": [
+        "axon-company",
+        "axon-oui"
+      ],
+      "categories": [
+        "axon"
+      ],
+      "weak": false
+    },
+    {
+      "key": "Wi-Fi:70C94E000004",
+      "recordIds": [
+        "morning.csv:4"
+      ],
+      "representativeIds": [
+        "morning.csv:4"
+      ],
+      "evidence": [
+        "flock-research-70C94E"
+      ],
+      "categories": [
+        "flock"
+      ],
+      "weak": true
+    },
+    {
+      "key": "BLE:DA0000000007",
+      "recordIds": [
+        "evening.csv:2"
+      ],
+      "representativeIds": [
+        "evening.csv:2"
+      ],
+      "evidence": [
+        "flock-serial"
+      ],
+      "categories": [
+        "flock"
+      ],
+      "weak": true
+    }
+  ],
+  "movement": {
+    "assessments": [
+      {
+        "id": "movement-0",
+        "representativeId": "morning.csv:0",
+        "type": "BLE",
+        "recordIds": [
+          "morning.csv:0",
+          "morning.csv:1",
+          "evening.csv:0",
+          "evening.csv:1"
+        ],
+        "sightings": [],
+        "locations": 0,
+        "sessions": 2,
+        "first": null,
+        "last": null,
+        "context": "camera",
+        "contextLabels": [
+          "flock"
+        ],
+        "window": null
+      },
+      {
+        "id": "movement-1",
+        "representativeId": "morning.csv:2",
+        "type": "BLE",
+        "recordIds": [
+          "morning.csv:2"
+        ],
+        "sightings": [],
+        "locations": 0,
+        "sessions": 1,
+        "first": null,
+        "last": null,
+        "context": "camera",
+        "contextLabels": [
+          "axon"
+        ],
+        "window": null
+      },
+      {
+        "id": "movement-2",
+        "representativeId": "morning.csv:3",
+        "type": "BLE",
+        "recordIds": [
+          "morning.csv:3"
+        ],
+        "sightings": [],
+        "locations": 0,
+        "sessions": 1,
+        "first": null,
+        "last": null,
+        "context": null,
+        "contextLabels": [],
+        "window": null
+      },
+      {
+        "id": "movement-3",
+        "representativeId": "morning.csv:4",
+        "type": "Wi-Fi",
+        "recordIds": [
+          "morning.csv:4"
+        ],
+        "sightings": [],
+        "locations": 0,
+        "sessions": 1,
+        "first": null,
+        "last": null,
+        "context": "wifi",
+        "contextLabels": [],
+        "window": null
+      },
+      {
+        "id": "movement-4",
+        "representativeId": "morning.csv:5",
+        "type": "Wi-Fi",
+        "recordIds": [
+          "morning.csv:5"
+        ],
+        "sightings": [],
+        "locations": 0,
+        "sessions": 1,
+        "first": null,
+        "last": null,
+        "context": "wifi",
+        "contextLabels": [],
+        "window": null
+      },
+      {
+        "id": "movement-5",
+        "representativeId": "morning.csv:6",
+        "type": "BLE",
+        "recordIds": [
+          "morning.csv:6"
+        ],
+        "sightings": [],
+        "locations": 0,
+        "sessions": 1,
+        "first": null,
+        "last": null,
+        "context": null,
+        "contextLabels": [],
+        "window": null
+      },
+      {
+        "id": "movement-6",
+        "representativeId": "evening.csv:2",
+        "type": "BLE",
+        "recordIds": [
+          "evening.csv:2"
+        ],
+        "sightings": [],
+        "locations": 0,
+        "sessions": 1,
+        "first": null,
+        "last": null,
+        "context": null,
+        "contextLabels": [],
+        "window": null
+      }
+    ],
+    "coverage": {
+      "total": 10,
+      "eligible": 0,
+      "excluded": 10,
+      "invalidAddress": 0,
+      "invalidTime": 0,
+      "invalidFix": 0,
+      "invalidAccuracy": 10,
+      "duplicates": 0,
+      "independent": 0,
+      "locations": 0,
+      "sessions": 2
+    }
+  }
+}
